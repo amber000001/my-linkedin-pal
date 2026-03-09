@@ -59,8 +59,8 @@ const Index = () => {
       {/* Header */}
       <header className="relative border-b border-border/30 px-6 py-5 glass">
         <div className="mx-auto max-w-3xl flex items-center gap-3">
-          <div className="h-10 w-10 rounded-xl bg-primary/15 flex items-center justify-center glow-magic animate-float">
-            <Sparkles className="h-5 w-5 text-primary" />
+          <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-purple-400 to-pink-400 flex items-center justify-center glow-rainbow animate-float shadow-lg">
+            <Sparkles className="h-5 w-5 text-white" />
           </div>
           <div>
             <h1 className="font-display text-xl font-bold text-gradient">
