@@ -33,8 +33,8 @@ export function PostInput({ mode, onGenerate, isLoading }: PostInputProps) {
     <div className="space-y-4">
       {mode !== "free-dump" && (
         <div>
-          <label className="text-sm font-medium text-secondary-foreground mb-1.5 block">
-            {mode === "meme" ? "Topic or trend" : "Topic, thought, or idea"}
+          <label className="text-sm font-medium text-secondary-foreground mb-1.5 block font-body">
+            {mode === "meme" ? "🎭 Topic or trend" : "💡 Topic, thought, or idea"}
           </label>
           <Input
             placeholder={
@@ -44,67 +44,67 @@ export function PostInput({ mode, onGenerate, isLoading }: PostInputProps) {
             }
             value={topic}
             onChange={(e) => setTopic(e.target.value)}
-            className="bg-card border-border/60 text-foreground placeholder:text-muted-foreground/50 h-11"
+            className="glass border-border/40 text-foreground placeholder:text-muted-foreground/50 h-11 rounded-xl"
           />
         </div>
       )}
 
       {mode === "free-dump" && (
         <div>
-          <label className="text-sm font-medium text-secondary-foreground mb-1.5 block">
-            Dump your raw thoughts
+          <label className="text-sm font-medium text-secondary-foreground mb-1.5 block font-body">
+            📝 Dump your raw thoughts
           </label>
           <Textarea
             placeholder="Paste rough notes, broken sentences, half-written drafts, copied examples..."
             value={freeText}
             onChange={(e) => setFreeText(e.target.value)}
-            className="bg-card border-border/60 text-foreground placeholder:text-muted-foreground/50 min-h-[180px] resize-y"
+            className="glass border-border/40 text-foreground placeholder:text-muted-foreground/50 min-h-[180px] resize-y rounded-xl"
           />
         </div>
       )}
 
       {mode === "meme" && (
         <div>
-          <label className="text-sm font-medium text-secondary-foreground mb-1.5 block">
-            Meme template or URL <span className="text-muted-foreground">(optional)</span>
+          <label className="text-sm font-medium text-secondary-foreground mb-1.5 block font-body">
+            🖼️ Meme template or URL <span className="text-muted-foreground">(optional)</span>
           </label>
           <Input
             placeholder="e.g. The Office congratulations meme, or paste a URL"
             value={memeTemplate}
             onChange={(e) => setMemeTemplate(e.target.value)}
-            className="bg-card border-border/60 text-foreground placeholder:text-muted-foreground/50 h-11"
+            className="glass border-border/40 text-foreground placeholder:text-muted-foreground/50 h-11 rounded-xl"
           />
         </div>
       )}
 
       <div>
-        <label className="text-sm font-medium text-secondary-foreground mb-1.5 block">
-          Reference URL <span className="text-muted-foreground">(optional)</span>
+        <label className="text-sm font-medium text-secondary-foreground mb-1.5 block font-body">
+          🔗 Reference URL <span className="text-muted-foreground">(optional)</span>
         </label>
         <Input
           placeholder="Article, news link, or source URL"
           value={url}
           onChange={(e) => setUrl(e.target.value)}
-          className="bg-card border-border/60 text-foreground placeholder:text-muted-foreground/50 h-11"
+          className="glass border-border/40 text-foreground placeholder:text-muted-foreground/50 h-11 rounded-xl"
         />
       </div>
 
       <Button
         variant="generate"
         size="lg"
-        className="w-full mt-2"
+        className="w-full mt-2 rounded-xl"
         onClick={handleSubmit}
         disabled={!canGenerate || isLoading}
       >
         {isLoading ? (
           <>
             <Loader2 className="h-4 w-4 animate-spin" />
-            Generating...
+            Casting spell...
           </>
         ) : (
           <>
             <Wand2 className="h-4 w-4" />
-            Generate Post
+            ✨ Generate Post
           </>
         )}
       </Button>

@@ -43,58 +43,59 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background relative overflow-hidden">
+      {/* Floating magical orbs */}
+      <div className="fixed inset-0 pointer-events-none">
+        <div className="absolute top-20 left-[10%] w-64 h-64 rounded-full bg-primary/5 blur-3xl animate-float" />
+        <div className="absolute bottom-32 right-[15%] w-48 h-48 rounded-full bg-accent/5 blur-3xl animate-float" style={{ animationDelay: '1s' }} />
+        <div className="absolute top-1/2 left-1/2 w-96 h-96 rounded-full bg-primary/3 blur-3xl animate-pulse-glow" />
+      </div>
+
       {/* Header */}
-      <header className="border-b border-border/50 px-6 py-5">
+      <header className="relative border-b border-border/30 px-6 py-5 glass">
         <div className="mx-auto max-w-3xl flex items-center gap-3">
-          <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
-            <Sparkles className="h-4 w-4 text-primary" />
+          <div className="h-10 w-10 rounded-xl bg-primary/15 flex items-center justify-center glow-magic animate-float">
+            <Sparkles className="h-5 w-5 text-primary" />
           </div>
           <div>
-            <h1 className="font-display text-xl font-semibold text-foreground">
+            <h1 className="font-display text-xl font-bold text-gradient">
               LinkedIn Post Companion
             </h1>
-            <p className="text-xs text-muted-foreground">Your voice. Scaled.</p>
+            <p className="text-xs text-muted-foreground font-body">Your voice. Scaled. ✨</p>
           </div>
         </div>
       </header>
 
       {/* Main */}
-      <main className="mx-auto max-w-3xl px-6 py-8">
+      <main className="relative mx-auto max-w-3xl px-6 py-8">
         <Tabs value={mode} onValueChange={(v) => { setMode(v as PostMode); setOutput(null); }}>
-          <TabsList className="w-full bg-secondary/50 border border-border/50 h-12 p-1">
-            <TabsTrigger value="meme" className="flex-1 data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-md">
+          <TabsList className="w-full glass-strong h-14 p-1.5 rounded-2xl">
+            <TabsTrigger value="meme" className="flex-1 rounded-xl data-[state=active]:glass data-[state=active]:text-foreground data-[state=active]:glow-magic data-[state=active]:shadow-lg transition-all duration-300">
               🎭 Meme Post
             </TabsTrigger>
-            <TabsTrigger value="thought-leadership" className="flex-1 data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-md">
+            <TabsTrigger value="thought-leadership" className="flex-1 rounded-xl data-[state=active]:glass data-[state=active]:text-foreground data-[state=active]:glow-magic data-[state=active]:shadow-lg transition-all duration-300">
               💡 Thought Leadership
             </TabsTrigger>
-            <TabsTrigger value="free-dump" className="flex-1 data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-md">
+            <TabsTrigger value="free-dump" className="flex-1 rounded-xl data-[state=active]:glass data-[state=active]:text-foreground data-[state=active]:glow-magic data-[state=active]:shadow-lg transition-all duration-300">
               📝 Free Text Dump
             </TabsTrigger>
           </TabsList>
 
           <div className="mt-6">
             <TabsContent value="meme">
-              <PostInput
-                mode="meme"
-                onGenerate={handleGenerate}
-                isLoading={isLoading}
-              />
+              <div className="glass rounded-2xl p-6 sparkle-border">
+                <PostInput mode="meme" onGenerate={handleGenerate} isLoading={isLoading} />
+              </div>
             </TabsContent>
             <TabsContent value="thought-leadership">
-              <PostInput
-                mode="thought-leadership"
-                onGenerate={handleGenerate}
-                isLoading={isLoading}
-              />
+              <div className="glass rounded-2xl p-6 sparkle-border">
+                <PostInput mode="thought-leadership" onGenerate={handleGenerate} isLoading={isLoading} />
+              </div>
             </TabsContent>
             <TabsContent value="free-dump">
-              <PostInput
-                mode="free-dump"
-                onGenerate={handleGenerate}
-                isLoading={isLoading}
-              />
+              <div className="glass rounded-2xl p-6 sparkle-border">
+                <PostInput mode="free-dump" onGenerate={handleGenerate} isLoading={isLoading} />
+              </div>
             </TabsContent>
           </div>
         </Tabs>
@@ -102,12 +103,7 @@ const Index = () => {
         {/* Output */}
         {(output || isLoading) && (
           <div className="mt-8">
-            <PostOutput
-              output={output}
-              isLoading={isLoading}
-              mode={mode}
-              onRefine={handleRefine}
-            />
+            <PostOutput output={output} isLoading={isLoading} mode={mode} onRefine={handleRefine} />
           </div>
         )}
       </main>
