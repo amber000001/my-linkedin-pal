@@ -45,6 +45,9 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">
+      {/* Sparkle particles */}
+      <SparkleParticles />
+
       {/* Floating magical orbs */}
       <div className="fixed inset-0 pointer-events-none">
         <div className="absolute top-20 left-[10%] w-64 h-64 rounded-full bg-primary/5 blur-3xl animate-float" />
