@@ -48,11 +48,12 @@ const Index = () => {
       {/* Sparkle particles */}
       <SparkleParticles />
 
-      {/* Floating magical orbs */}
+      {/* Floating rainbow orbs */}
       <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute top-20 left-[10%] w-64 h-64 rounded-full bg-primary/5 blur-3xl animate-float" />
-        <div className="absolute bottom-32 right-[15%] w-48 h-48 rounded-full bg-accent/5 blur-3xl animate-float" style={{ animationDelay: '1s' }} />
-        <div className="absolute top-1/2 left-1/2 w-96 h-96 rounded-full bg-primary/3 blur-3xl animate-pulse-glow" />
+        <div className="absolute top-20 left-[10%] w-80 h-80 rounded-full bg-gradient-to-r from-purple-200/30 to-pink-200/30 blur-3xl animate-float" />
+        <div className="absolute bottom-32 right-[15%] w-64 h-64 rounded-full bg-gradient-to-r from-blue-200/30 to-cyan-200/30 blur-3xl animate-float" style={{ animationDelay: '1s' }} />
+        <div className="absolute top-1/2 left-1/2 w-96 h-96 rounded-full bg-gradient-to-r from-yellow-200/20 to-orange-200/20 blur-3xl animate-pulse-glow" />
+        <div className="absolute top-32 right-[20%] w-48 h-48 rounded-full bg-gradient-to-r from-green-200/25 to-emerald-200/25 blur-2xl animate-float" style={{ animationDelay: '2s' }} />
       </div>
 
       {/* Header */}
