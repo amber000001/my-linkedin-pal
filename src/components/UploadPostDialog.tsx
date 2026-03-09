@@ -60,7 +60,7 @@ export function UploadPostDialog() {
           Upload LinkedIn Post
         </Button>
       </DialogTrigger>
-      <DialogContent className="glass-strong sm:max-w-lg border-border/30">
+      <DialogContent className="glass-static sm:max-w-lg border-border/30">
         <DialogHeader>
           <DialogTitle className="font-display text-gradient text-lg">
             📚 Upload LinkedIn Post
