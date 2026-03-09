@@ -17,11 +17,11 @@ interface Particle {
 }
 
 const COLORS = [
-  "hsl(280, 70%, 75%)",
-  "hsl(45, 90%, 65%)",
-  "hsl(320, 60%, 75%)",
-  "hsl(200, 70%, 70%)",
-  "hsl(270, 60%, 80%)",
+  'hsl(280 100% 70%)', // primary purple
+  'hsl(40 100% 65%)',  // accent gold
+  'hsl(320 100% 70%)', // pink
+  'hsl(200 100% 70%)', // blue
+  'hsl(120 100% 70%)', // green
 ];
 
 function drawStar(ctx: CanvasRenderingContext2D, x: number, y: number, size: number, rotation: number) {
