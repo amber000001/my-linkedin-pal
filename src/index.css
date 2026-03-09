@@ -61,7 +61,7 @@
 @layer base {
   * {
     @apply border-border;
-    cursor: url('/magic-wand-cursor.png') 4 4, auto;
+    cursor: url('/cursor-wand.png') 4 4, auto;
   }
 
   body {
