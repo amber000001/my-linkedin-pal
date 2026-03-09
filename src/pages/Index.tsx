@@ -61,16 +61,19 @@ const Index = () => {
 
       {/* Header */}
       <header className="relative border-b border-border/30 px-6 py-5 glass-static">
-        <div className="mx-auto max-w-7xl flex items-center gap-3">
-          <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-pink-400 via-purple-400 to-cyan-400 flex items-center justify-center glow-rainbow animate-float shadow-lg">
-            <Sparkles className="h-5 w-5 text-white" />
+        <div className="mx-auto max-w-7xl flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-pink-400 via-purple-400 to-cyan-400 flex items-center justify-center glow-rainbow animate-float shadow-lg">
+              <Sparkles className="h-5 w-5 text-white" />
+            </div>
+            <div>
+              <h1 className="font-display text-xl font-bold text-gradient">
+                LinkedIn Post Companion
+              </h1>
+              <p className="text-xs text-muted-foreground font-body">Your voice. Scaled. ✨</p>
+            </div>
           </div>
-          <div>
-            <h1 className="font-display text-xl font-bold text-gradient">
-              LinkedIn Post Companion
-            </h1>
-            <p className="text-xs text-muted-foreground font-body">Your voice. Scaled. ✨</p>
-          </div>
+          <UploadPostDialog />
         </div>
       </header>
 
