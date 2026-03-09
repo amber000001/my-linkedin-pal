@@ -75,13 +75,13 @@ const Index = () => {
       <main className="relative mx-auto max-w-3xl px-6 py-8">
         <Tabs value={mode} onValueChange={(v) => { setMode(v as PostMode); setOutput(null); }}>
           <TabsList className="w-full glass-strong h-14 p-1.5 rounded-2xl">
-            <TabsTrigger value="meme" className="flex-1 rounded-xl data-[state=active]:glass data-[state=active]:text-foreground data-[state=active]:glow-magic data-[state=active]:shadow-lg transition-all duration-300">
+            <TabsTrigger value="meme" className="flex-1 rounded-xl data-[state=active]:glass data-[state=active]:text-foreground data-[state=active]:glow-rainbow data-[state=active]:shadow-lg transition-all duration-300">
               🎭 Meme Post
             </TabsTrigger>
-            <TabsTrigger value="thought-leadership" className="flex-1 rounded-xl data-[state=active]:glass data-[state=active]:text-foreground data-[state=active]:glow-magic data-[state=active]:shadow-lg transition-all duration-300">
+            <TabsTrigger value="thought-leadership" className="flex-1 rounded-xl data-[state=active]:glass data-[state=active]:text-foreground data-[state=active]:glow-rainbow data-[state=active]:shadow-lg transition-all duration-300">
               💡 Thought Leadership
             </TabsTrigger>
-            <TabsTrigger value="free-dump" className="flex-1 rounded-xl data-[state=active]:glass data-[state=active]:text-foreground data-[state=active]:glow-magic data-[state=active]:shadow-lg transition-all duration-300">
+            <TabsTrigger value="free-dump" className="flex-1 rounded-xl data-[state=active]:glass data-[state=active]:text-foreground data-[state=active]:glow-rainbow data-[state=active]:shadow-lg transition-all duration-300">
               📝 Free Text Dump
             </TabsTrigger>
           </TabsList>
