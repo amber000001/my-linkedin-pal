@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -133,6 +134,58 @@ serve(async (req) => {
 
     const { mode, topic, freeText, url, memeTemplate } = await req.json();
 
+    // Fetch stored posts from repository for context
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    let repositoryContext = "";
+    if (topic) {
+      // Primary: posts matching the selected topic
+      const { data: topicPosts } = await supabase
+        .from("linkedin_posts")
+        .select("post_text")
+        .eq("topic", topic)
+        .order("created_at", { ascending: false })
+        .limit(5);
+
+      // Secondary: other recent posts for general voice context
+      const { data: otherPosts } = await supabase
+        .from("linkedin_posts")
+        .select("post_text")
+        .neq("topic", topic)
+        .order("created_at", { ascending: false })
+        .limit(3);
+
+      if (topicPosts && topicPosts.length > 0) {
+        repositoryContext += `\n\n## REFERENCE POSTS (same topic - match this style closely):\n`;
+        topicPosts.forEach((p, i) => {
+          repositoryContext += `\n--- Post ${i + 1} ---\n${p.post_text}\n`;
+        });
+      }
+
+      if (otherPosts && otherPosts.length > 0) {
+        repositoryContext += `\n\n## OTHER AUTHOR POSTS (for general voice reference):\n`;
+        otherPosts.forEach((p, i) => {
+          repositoryContext += `\n--- Post ${i + 1} ---\n${p.post_text}\n`;
+        });
+      }
+    } else if (mode === "free-dump") {
+      // For free-dump, get recent posts for voice matching
+      const { data: recentPosts } = await supabase
+        .from("linkedin_posts")
+        .select("post_text")
+        .order("created_at", { ascending: false })
+        .limit(5);
+
+      if (recentPosts && recentPosts.length > 0) {
+        repositoryContext += `\n\n## AUTHOR REFERENCE POSTS (match this voice and style):\n`;
+        recentPosts.forEach((p, i) => {
+          repositoryContext += `\n--- Post ${i + 1} ---\n${p.post_text}\n`;
+        });
+      }
+    }
+
     let userMessage = "";
     if (mode === "free-dump") {
       userMessage = `Convert these raw notes into a polished LinkedIn post:\n\n${freeText}`;
@@ -160,7 +213,7 @@ serve(async (req) => {
         body: JSON.stringify({
           model: "google/gemini-3-flash-preview",
           messages: [
-            { role: "system", content: STYLE_SYSTEM_PROMPT + "\n\n" + modePrompt },
+            { role: "system", content: STYLE_SYSTEM_PROMPT + repositoryContext + "\n\n" + modePrompt },
             { role: "user", content: userMessage },
           ],
         }),

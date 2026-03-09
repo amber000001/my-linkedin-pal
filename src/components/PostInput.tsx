@@ -2,8 +2,18 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Loader2, Wand2 } from "lucide-react";
 import type { PostMode, GenerateRequest } from "@/lib/api";
+import { TOPIC_CATEGORIES } from "@/lib/topics";
 
 interface PostInputProps {
   mode: PostMode;
@@ -13,39 +23,63 @@ interface PostInputProps {
 
 export function PostInput({ mode, onGenerate, isLoading }: PostInputProps) {
   const [topic, setTopic] = useState("");
+  const [customTopic, setCustomTopic] = useState("");
   const [freeText, setFreeText] = useState("");
   const [url, setUrl] = useState("");
   const [memeTemplate, setMemeTemplate] = useState("");
 
   const handleSubmit = () => {
+    const effectiveTopic = topic === "__custom" ? customTopic : topic;
     onGenerate({
-      topic: mode === "free-dump" ? undefined : topic,
+      topic: mode === "free-dump" ? undefined : effectiveTopic,
       freeText: mode === "free-dump" ? freeText : undefined,
       url: url || undefined,
       memeTemplate: mode === "meme" ? memeTemplate || undefined : undefined,
     });
   };
 
+  const effectiveTopic = topic === "__custom" ? customTopic.trim() : topic;
   const canGenerate =
-    mode === "free-dump" ? freeText.trim().length > 0 : topic.trim().length > 0;
+    mode === "free-dump" ? freeText.trim().length > 0 : effectiveTopic.length > 0;
 
   return (
     <div className="space-y-4">
       {mode !== "free-dump" && (
         <div>
           <label className="text-sm font-medium text-secondary-foreground mb-1.5 block font-body">
-            {mode === "meme" ? "🎭 Topic or trend" : "💡 Topic, thought, or idea"}
+            {mode === "meme" ? "🎭 Topic" : "💡 Topic"}
           </label>
-          <Input
-            placeholder={
-              mode === "meme"
-                ? "e.g. Open rates are deceptive"
-                : "e.g. Google Postmaster deprecation"
-            }
-            value={topic}
-            onChange={(e) => setTopic(e.target.value)}
-            className="glass border-border/40 text-foreground placeholder:text-muted-foreground/50 h-11 rounded-xl"
-          />
+          <Select value={topic} onValueChange={setTopic}>
+            <SelectTrigger className="glass border-border/40 text-foreground h-11 rounded-xl">
+              <SelectValue placeholder="Select a topic..." />
+            </SelectTrigger>
+            <SelectContent className="glass-strong border-border/30 max-h-[300px]">
+              {TOPIC_CATEGORIES.map((category) => (
+                <SelectGroup key={category.group}>
+                  <SelectLabel className="font-display text-xs text-muted-foreground">
+                    {category.group}
+                  </SelectLabel>
+                  {category.topics.map((t) => (
+                    <SelectItem key={t} value={t} className="text-sm">
+                      {t}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              ))}
+              <SelectGroup>
+                <SelectLabel className="font-display text-xs text-muted-foreground">Other</SelectLabel>
+                <SelectItem value="__custom" className="text-sm">Custom topic...</SelectItem>
+              </SelectGroup>
+            </SelectContent>
+          </Select>
+          {topic === "__custom" && (
+            <Input
+              placeholder="Type your custom topic..."
+              value={customTopic}
+              onChange={(e) => setCustomTopic(e.target.value)}
+              className="glass border-border/40 text-foreground placeholder:text-muted-foreground/50 h-11 rounded-xl mt-2"
+            />
+          )}
         </div>
       )}
 
