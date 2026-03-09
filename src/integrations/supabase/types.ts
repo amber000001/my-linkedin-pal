@@ -35,6 +35,69 @@ export type Database = {
         }
         Relationships: []
       }
+      post_generations: {
+        Row: {
+          alternate_draft: string | null
+          alternate_hooks: Json | null
+          comment_replies: Json | null
+          created_at: string
+          cta_options: string | null
+          generated_post: string
+          hashtags: Json | null
+          id: string
+          input_text: string | null
+          input_url: string | null
+          is_favorite: boolean
+          meme_caption: string | null
+          meme_ideas: Json | null
+          meme_template: string | null
+          post_type: string
+          status: string
+          topic: string | null
+          topic_dropdown_value: string | null
+        }
+        Insert: {
+          alternate_draft?: string | null
+          alternate_hooks?: Json | null
+          comment_replies?: Json | null
+          created_at?: string
+          cta_options?: string | null
+          generated_post: string
+          hashtags?: Json | null
+          id?: string
+          input_text?: string | null
+          input_url?: string | null
+          is_favorite?: boolean
+          meme_caption?: string | null
+          meme_ideas?: Json | null
+          meme_template?: string | null
+          post_type?: string
+          status?: string
+          topic?: string | null
+          topic_dropdown_value?: string | null
+        }
+        Update: {
+          alternate_draft?: string | null
+          alternate_hooks?: Json | null
+          comment_replies?: Json | null
+          created_at?: string
+          cta_options?: string | null
+          generated_post?: string
+          hashtags?: Json | null
+          id?: string
+          input_text?: string | null
+          input_url?: string | null
+          is_favorite?: boolean
+          meme_caption?: string | null
+          meme_ideas?: Json | null
+          meme_template?: string | null
+          post_type?: string
+          status?: string
+          topic?: string | null
+          topic_dropdown_value?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

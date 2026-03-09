@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -19,14 +19,34 @@ interface PostInputProps {
   mode: PostMode;
   onGenerate: (request: Omit<GenerateRequest, "mode">) => void;
   isLoading: boolean;
+  initialTopic?: string;
+  initialFreeText?: string;
+  initialUrl?: string;
+  initialMemeTemplate?: string;
 }
 
-export function PostInput({ mode, onGenerate, isLoading }: PostInputProps) {
-  const [topic, setTopic] = useState("");
+export function PostInput({ mode, onGenerate, isLoading, initialTopic, initialFreeText, initialUrl, initialMemeTemplate }: PostInputProps) {
+  const [topic, setTopic] = useState(initialTopic || "");
   const [customTopic, setCustomTopic] = useState("");
-  const [freeText, setFreeText] = useState("");
-  const [url, setUrl] = useState("");
-  const [memeTemplate, setMemeTemplate] = useState("");
+  const [freeText, setFreeText] = useState(initialFreeText || "");
+  const [url, setUrl] = useState(initialUrl || "");
+  const [memeTemplate, setMemeTemplate] = useState(initialMemeTemplate || "");
+
+  useEffect(() => {
+    if (initialTopic) {
+      const allTopics = TOPIC_CATEGORIES.flatMap(c => c.topics);
+      if (allTopics.includes(initialTopic)) {
+        setTopic(initialTopic);
+      } else {
+        setTopic("__custom");
+        setCustomTopic(initialTopic);
+      }
+    }
+  }, [initialTopic]);
+
+  useEffect(() => { if (initialFreeText) setFreeText(initialFreeText); }, [initialFreeText]);
+  useEffect(() => { if (initialUrl) setUrl(initialUrl); }, [initialUrl]);
+  useEffect(() => { if (initialMemeTemplate) setMemeTemplate(initialMemeTemplate); }, [initialMemeTemplate]);
 
   const handleSubmit = () => {
     const effectiveTopic = topic === "__custom" ? customTopic : topic;

@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { PostInput } from "@/components/PostInput";
 import { PostOutput } from "@/components/PostOutput";
@@ -6,21 +7,89 @@ import { PostEditor } from "@/components/PostEditor";
 import { MemeGenerator } from "@/components/MemeGenerator";
 import { UploadPostDialog } from "@/components/UploadPostDialog";
 import { generatePost, type PostMode, type GenerateRequest, type GenerateResponse } from "@/lib/api";
-import { Sparkles } from "lucide-react";
+import { Sparkles, Clock } from "lucide-react";
 import { SparkleParticles } from "@/components/SparkleParticles";
+import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import type { PostGeneration } from "@/lib/history";
 
 const Index = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
   const [mode, setMode] = useState<PostMode>("thought-leadership");
   const [isLoading, setIsLoading] = useState(false);
   const [output, setOutput] = useState<GenerateResponse | null>(null);
+  const [lastRequest, setLastRequest] = useState<Omit<GenerateRequest, "mode"> | null>(null);
+  const [reuseTopic, setReuseTopic] = useState<string | undefined>();
+  const [reuseFreeText, setReuseFreeText] = useState<string | undefined>();
+  const [reuseUrl, setReuseUrl] = useState<string | undefined>();
+  const [reuseMemeTemplate, setReuseMemeTemplate] = useState<string | undefined>();
+
+  // Handle reuse from history
+  useEffect(() => {
+    const reuseId = searchParams.get("reuse");
+    if (!reuseId) return;
+
+    const loadReuse = async () => {
+      const { data, error } = await supabase
+        .from("post_generations")
+        .select("*")
+        .eq("id", reuseId)
+        .single();
+
+      if (error || !data) {
+        toast.error("Could not load draft");
+        return;
+      }
+      const item = data as PostGeneration;
+      setMode(item.post_type as PostMode);
+      setReuseTopic(item.topic_dropdown_value || item.topic || undefined);
+      setReuseFreeText(item.input_text || undefined);
+      setReuseUrl(item.input_url || undefined);
+      setReuseMemeTemplate(item.meme_template || undefined);
+      setSearchParams({}, { replace: true });
+      toast.success("Draft loaded for reuse ✨");
+    };
+    loadReuse();
+  }, [searchParams, setSearchParams]);
+
+  const saveGeneration = async (
+    request: Omit<GenerateRequest, "mode">,
+    result: GenerateResponse
+  ) => {
+    try {
+      await supabase.from("post_generations").insert({
+        topic: request.topic || null,
+        post_type: mode,
+        topic_dropdown_value: request.topic || null,
+        input_text: request.freeText || null,
+        input_url: request.url || null,
+        meme_template: request.memeTemplate || null,
+        generated_post: result.mainPost,
+        alternate_hooks: (result.alternateHooks || []) as any,
+        cta_options: result.cta || null,
+        hashtags: (result.hashtags || []) as any,
+        meme_caption: null,
+        alternate_draft: result.alternateDraft || null,
+        comment_replies: (result.commentReplies || []) as any,
+        meme_ideas: (result.memeIdeas || []) as any,
+        status: "draft",
+        is_favorite: false,
+      });
+    } catch (e) {
+      console.error("Failed to save generation:", e);
+    }
+  };
 
   const handleGenerate = async (request: Omit<GenerateRequest, "mode">) => {
     setIsLoading(true);
     setOutput(null);
+    setLastRequest(request);
     try {
       const result = await generatePost({ ...request, mode });
       setOutput(result);
+      await saveGeneration(request, result);
     } catch (e) {
       console.error(e);
       toast.error("Generation failed. Please try again.");
@@ -33,11 +102,15 @@ const Index = () => {
     if (!output) return;
     setIsLoading(true);
     try {
+      const refinedRequest = {
+        topic: `Refine this post: ${instruction}\n\nOriginal post:\n${output.mainPost}`,
+      };
       const result = await generatePost({
         mode,
-        topic: `Refine this post: ${instruction}\n\nOriginal post:\n${output.mainPost}`,
+        ...refinedRequest,
       });
       setOutput(result);
+      await saveGeneration(refinedRequest, result);
     } catch (e) {
       console.error(e);
       toast.error("Refinement failed. Please try again.");
@@ -64,7 +137,7 @@ const Index = () => {
         <div className="mx-auto max-w-7xl flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-pink-400 via-purple-400 to-cyan-400 flex items-center justify-center glow-rainbow animate-float shadow-lg">
-              <Sparkles className="h-5 w-5 text-white" />
+              <Sparkles className="h-5 w-5 text-primary-foreground" />
             </div>
             <div>
               <h1 className="font-display text-xl font-bold text-gradient">
@@ -73,7 +146,18 @@ const Index = () => {
               <p className="text-xs text-muted-foreground font-body">Your voice. Scaled. ✨</p>
             </div>
           </div>
-          <UploadPostDialog />
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="glass border-border/40 rounded-xl hover:glow-magic"
+              onClick={() => navigate("/history")}
+            >
+              <Clock className="h-4 w-4 mr-2" />
+              History
+            </Button>
+            <UploadPostDialog />
+          </div>
         </div>
       </header>
 
@@ -96,17 +180,17 @@ const Index = () => {
             <div className="mt-6">
               <TabsContent value="meme">
                 <div className="glass rounded-2xl p-6 sparkle-border">
-                  <PostInput mode="meme" onGenerate={handleGenerate} isLoading={isLoading} />
+                  <PostInput mode="meme" onGenerate={handleGenerate} isLoading={isLoading} initialTopic={reuseTopic} initialUrl={reuseUrl} initialMemeTemplate={reuseMemeTemplate} />
                 </div>
               </TabsContent>
               <TabsContent value="thought-leadership">
                 <div className="glass rounded-2xl p-6 sparkle-border">
-                  <PostInput mode="thought-leadership" onGenerate={handleGenerate} isLoading={isLoading} />
+                  <PostInput mode="thought-leadership" onGenerate={handleGenerate} isLoading={isLoading} initialTopic={reuseTopic} initialUrl={reuseUrl} />
                 </div>
               </TabsContent>
               <TabsContent value="free-dump">
                 <div className="glass rounded-2xl p-6 sparkle-border">
-                  <PostInput mode="free-dump" onGenerate={handleGenerate} isLoading={isLoading} />
+                  <PostInput mode="free-dump" onGenerate={handleGenerate} isLoading={isLoading} initialFreeText={reuseFreeText} initialUrl={reuseUrl} />
                 </div>
               </TabsContent>
             </div>
@@ -116,15 +200,12 @@ const Index = () => {
         {/* Split Layout - Output Left, Editor Right */}
         {hasOutput && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Left Column - Generated Output + Meme Generator */}
             <div className="space-y-6">
               <PostOutput output={output} isLoading={isLoading} mode={mode} onRefine={handleRefine} />
               {mode === "meme" && output?.memeIdeas && output.memeIdeas.length > 0 && (
                 <MemeGenerator memeIdeas={output.memeIdeas} />
               )}
             </div>
-
-            {/* Right Column - Editor */}
             <div>
               {output && <PostEditor output={output} />}
             </div>
