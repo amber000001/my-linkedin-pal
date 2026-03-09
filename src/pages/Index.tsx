@@ -4,6 +4,7 @@ import { PostInput } from "@/components/PostInput";
 import { PostOutput } from "@/components/PostOutput";
 import { generatePost, type PostMode, type GenerateRequest, type GenerateResponse } from "@/lib/api";
 import { Sparkles } from "lucide-react";
+import { SparkleParticles } from "@/components/SparkleParticles";
 import { toast } from "sonner";
 
 const Index = () => {
