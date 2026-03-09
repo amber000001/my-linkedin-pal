@@ -4,6 +4,7 @@ import { PostInput } from "@/components/PostInput";
 import { PostOutput } from "@/components/PostOutput";
 import { PostEditor } from "@/components/PostEditor";
 import { MemeGenerator } from "@/components/MemeGenerator";
+import { UploadPostDialog } from "@/components/UploadPostDialog";
 import { generatePost, type PostMode, type GenerateRequest, type GenerateResponse } from "@/lib/api";
 import { Sparkles } from "lucide-react";
 import { SparkleParticles } from "@/components/SparkleParticles";
