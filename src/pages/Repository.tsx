@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
@@ -39,6 +41,12 @@ import {
   Plus,
   ChevronRight,
   Eye,
+  BarChart3,
+  TrendingUp,
+  MessageSquare,
+  Heart,
+  Image,
+  Calendar,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -47,6 +55,13 @@ interface LinkedInPost {
   topic: string;
   post_text: string;
   created_at: string;
+  date_posted: string | null;
+  impressions: number;
+  reactions: number;
+  comments: number;
+  has_meme: boolean;
+  reaction_rate: number;
+  comment_rate: number;
 }
 
 export default function Repository() {
@@ -62,6 +77,11 @@ export default function Repository() {
   const [showForm, setShowForm] = useState(false);
   const [topic, setTopic] = useState("");
   const [postText, setPostText] = useState("");
+  const [datePosted, setDatePosted] = useState("");
+  const [impressions, setImpressions] = useState("");
+  const [reactions, setReactions] = useState("");
+  const [commentsInput, setCommentsInput] = useState("");
+  const [hasMeme, setHasMeme] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const fetchPosts = async () => {
@@ -95,16 +115,13 @@ export default function Repository() {
     });
   }, [posts, search]);
 
-  // Group filtered posts by topic
   const groupedByTopic = useMemo(() => {
     const groups: Record<string, LinkedInPost[]> = {};
     filtered.forEach((p) => {
       if (!groups[p.topic]) groups[p.topic] = [];
       groups[p.topic].push(p);
     });
-    // Sort topics by TOPIC_CATEGORIES order
     const orderedTopics = ALL_TOPICS.filter((t) => groups[t]);
-    // Add any topics not in ALL_TOPICS
     Object.keys(groups).forEach((t) => {
       if (!orderedTopics.includes(t)) orderedTopics.push(t);
     });
@@ -119,6 +136,16 @@ export default function Repository() {
     return counts;
   }, [posts]);
 
+  const resetForm = () => {
+    setTopic("");
+    setPostText("");
+    setDatePosted("");
+    setImpressions("");
+    setReactions("");
+    setCommentsInput("");
+    setHasMeme(false);
+  };
+
   const handleUpload = async () => {
     if (!topic || !postText.trim()) return;
     setIsSubmitting(true);
@@ -126,11 +153,15 @@ export default function Repository() {
       const { error } = await supabase.from("linkedin_posts").insert({
         topic,
         post_text: postText.trim(),
+        date_posted: datePosted || null,
+        impressions: parseInt(impressions) || 0,
+        reactions: parseInt(reactions) || 0,
+        comments: parseInt(commentsInput) || 0,
+        has_meme: hasMeme,
       });
       if (error) throw error;
       toast.success("Post uploaded to repository ✨");
-      setTopic("");
-      setPostText("");
+      resetForm();
       setShowForm(false);
       fetchPosts();
     } catch (e) {
@@ -169,6 +200,43 @@ export default function Repository() {
 
   const toggleTopic = (topic: string) => {
     setOpenTopics((prev) => ({ ...prev, [topic]: !prev[topic] }));
+  };
+
+  const formatNumber = (n: number) => {
+    if (n >= 1000) return (n / 1000).toFixed(1) + "k";
+    return n.toString();
+  };
+
+  const MetricsBadges = ({ post }: { post: LinkedInPost }) => {
+    if (!post.impressions && !post.reactions && !post.comments) return null;
+    return (
+      <div className="flex items-center gap-2 flex-wrap">
+        {post.impressions > 0 && (
+          <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+            <TrendingUp className="h-3 w-3" />
+            {formatNumber(post.impressions)}
+          </span>
+        )}
+        {post.reactions > 0 && (
+          <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+            <Heart className="h-3 w-3" />
+            {formatNumber(post.reactions)}
+          </span>
+        )}
+        {post.comments > 0 && (
+          <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+            <MessageSquare className="h-3 w-3" />
+            {formatNumber(post.comments)}
+          </span>
+        )}
+        {post.has_meme && (
+          <Badge variant="outline" className="text-[10px] px-1.5 py-0 rounded-md border-border/40">
+            <Image className="h-2.5 w-2.5 mr-0.5" />
+            Meme
+          </Badge>
+        )}
+      </div>
+    );
   };
 
   return (
@@ -218,10 +286,10 @@ export default function Repository() {
         {showForm && (
           <div className="glass-static rounded-2xl p-6 sparkle-border space-y-4">
             <h2 className="font-display text-lg font-semibold text-gradient">📚 Upload LinkedIn Post</h2>
+
+            {/* Topic */}
             <div>
-              <label className="text-sm font-medium text-secondary-foreground mb-1.5 block font-body">
-                📂 Topic
-              </label>
+              <label className="text-sm font-medium text-secondary-foreground mb-1.5 block font-body">📂 Topic</label>
               <Select value={topic} onValueChange={setTopic}>
                 <SelectTrigger className="glass border-border/40 text-foreground h-11 rounded-xl">
                   <SelectValue placeholder="Select a topic..." />
@@ -234,8 +302,7 @@ export default function Repository() {
                       </SelectLabel>
                       {category.topics.map((t) => (
                         <SelectItem key={t} value={t} className="text-sm">
-                          {t}
-                          {topicCounts[t] ? ` (${topicCounts[t]})` : ""}
+                          {t}{topicCounts[t] ? ` (${topicCounts[t]})` : ""}
                         </SelectItem>
                       ))}
                     </SelectGroup>
@@ -243,10 +310,10 @@ export default function Repository() {
                 </SelectContent>
               </Select>
             </div>
+
+            {/* Post Text */}
             <div>
-              <label className="text-sm font-medium text-secondary-foreground mb-1.5 block font-body">
-                📝 Post Text
-              </label>
+              <label className="text-sm font-medium text-secondary-foreground mb-1.5 block font-body">📝 Post Text</label>
               <Textarea
                 placeholder="Paste your full LinkedIn post here..."
                 value={postText}
@@ -254,6 +321,73 @@ export default function Repository() {
                 className="glass border-border/40 text-foreground placeholder:text-muted-foreground/50 min-h-[180px] resize-y rounded-xl"
               />
             </div>
+
+            {/* Date Posted */}
+            <div>
+              <label className="text-sm font-medium text-secondary-foreground mb-1.5 block font-body">
+                <Calendar className="h-3.5 w-3.5 inline mr-1" />
+                Date Posted
+              </label>
+              <Input
+                type="date"
+                value={datePosted}
+                onChange={(e) => setDatePosted(e.target.value)}
+                className="glass border-border/40 text-foreground h-11 rounded-xl"
+              />
+            </div>
+
+            {/* Performance Metrics */}
+            <div>
+              <label className="text-sm font-medium text-secondary-foreground mb-1.5 block font-body">
+                <BarChart3 className="h-3.5 w-3.5 inline mr-1" />
+                Performance Metrics
+              </label>
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <label className="text-xs text-muted-foreground mb-1 block">Impressions</label>
+                  <Input
+                    type="number"
+                    min="0"
+                    placeholder="0"
+                    value={impressions}
+                    onChange={(e) => setImpressions(e.target.value)}
+                    className="glass border-border/40 text-foreground h-10 rounded-xl"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-muted-foreground mb-1 block">Reactions</label>
+                  <Input
+                    type="number"
+                    min="0"
+                    placeholder="0"
+                    value={reactions}
+                    onChange={(e) => setReactions(e.target.value)}
+                    className="glass border-border/40 text-foreground h-10 rounded-xl"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-muted-foreground mb-1 block">Comments</label>
+                  <Input
+                    type="number"
+                    min="0"
+                    placeholder="0"
+                    value={commentsInput}
+                    onChange={(e) => setCommentsInput(e.target.value)}
+                    className="glass border-border/40 text-foreground h-10 rounded-xl"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Has Meme */}
+            <div className="flex items-center gap-3">
+              <Switch id="has-meme" checked={hasMeme} onCheckedChange={setHasMeme} />
+              <Label htmlFor="has-meme" className="text-sm font-body text-secondary-foreground cursor-pointer">
+                <Image className="h-3.5 w-3.5 inline mr-1" />
+                Post includes a meme
+              </Label>
+            </div>
+
             <div className="flex gap-3">
               <Button
                 variant="generate"
@@ -278,7 +412,7 @@ export default function Repository() {
                 variant="outline"
                 size="lg"
                 className="rounded-xl"
-                onClick={() => { setShowForm(false); setTopic(""); setPostText(""); }}
+                onClick={() => { setShowForm(false); resetForm(); }}
               >
                 Cancel
               </Button>
@@ -342,46 +476,26 @@ export default function Repository() {
                     >
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1.5">
+                          <div className="flex items-center gap-2 mb-1.5 flex-wrap">
                             <span className="text-xs text-muted-foreground">
-                              {new Date(post.created_at).toLocaleDateString("en-US", {
-                                month: "short",
-                                day: "numeric",
-                                year: "numeric",
-                              })}
+                              {post.date_posted
+                                ? new Date(post.date_posted + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+                                : new Date(post.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
                             </span>
+                            <MetricsBadges post={post} />
                           </div>
                           <p className="text-sm text-foreground/80 font-body line-clamp-2">
                             {getPreview(post.post_text)}
                           </p>
                         </div>
                         <div className="flex items-center gap-1 shrink-0">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7"
-                            onClick={(e) => { e.stopPropagation(); setViewingPost(post); }}
-                          >
+                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); setViewingPost(post); }}>
                             <Eye className="h-3.5 w-3.5" />
                           </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7"
-                            onClick={(e) => copyPost(post, e)}
-                          >
-                            {copiedId === post.id ? (
-                              <Check className="h-3.5 w-3.5" />
-                            ) : (
-                              <Copy className="h-3.5 w-3.5" />
-                            )}
+                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => copyPost(post, e)}>
+                            {copiedId === post.id ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
                           </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7 text-destructive hover:text-destructive"
-                            onClick={(e) => deletePost(post.id, e)}
-                          >
+                          <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={(e) => deletePost(post.id, e)}>
                             <Trash2 className="h-3.5 w-3.5" />
                           </Button>
                         </div>
@@ -403,35 +517,57 @@ export default function Repository() {
               <Badge variant="secondary" className="text-xs rounded-lg">
                 {viewingPost?.topic}
               </Badge>
+              {viewingPost?.has_meme && (
+                <Badge variant="outline" className="text-xs rounded-lg border-border/40">
+                  <Image className="h-3 w-3 mr-1" />
+                  Meme
+                </Badge>
+              )}
               <span className="text-xs text-muted-foreground font-body font-normal ml-auto">
-                {viewingPost && new Date(viewingPost.created_at).toLocaleDateString("en-US", {
-                  month: "short",
-                  day: "numeric",
-                  year: "numeric",
-                })}
+                {viewingPost && (viewingPost.date_posted
+                  ? new Date(viewingPost.date_posted + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+                  : new Date(viewingPost.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+                )}
               </span>
             </DialogTitle>
           </DialogHeader>
-          <div className="mt-4">
+
+          {/* Performance metrics panel */}
+          {viewingPost && (viewingPost.impressions > 0 || viewingPost.reactions > 0 || viewingPost.comments > 0) && (
+            <div className="glass rounded-xl p-4 grid grid-cols-5 gap-3 text-center">
+              <div>
+                <p className="text-xs text-muted-foreground mb-0.5">Impressions</p>
+                <p className="text-sm font-semibold text-foreground">{formatNumber(viewingPost.impressions)}</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground mb-0.5">Reactions</p>
+                <p className="text-sm font-semibold text-foreground">{formatNumber(viewingPost.reactions)}</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground mb-0.5">Comments</p>
+                <p className="text-sm font-semibold text-foreground">{formatNumber(viewingPost.comments)}</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground mb-0.5">React Rate</p>
+                <p className="text-sm font-semibold text-foreground">{viewingPost.reaction_rate}%</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground mb-0.5">Comment Rate</p>
+                <p className="text-sm font-semibold text-foreground">{viewingPost.comment_rate}%</p>
+              </div>
+            </div>
+          )}
+
+          <div>
             <div className="glass rounded-xl p-5 text-sm text-foreground/90 font-body whitespace-pre-line leading-relaxed max-h-[55vh] overflow-y-auto">
               {viewingPost?.post_text}
             </div>
             <div className="flex gap-2 mt-4">
-              <Button
-                variant="outline"
-                size="sm"
-                className="rounded-xl"
-                onClick={() => viewingPost && copyPost(viewingPost)}
-              >
+              <Button variant="outline" size="sm" className="rounded-xl" onClick={() => viewingPost && copyPost(viewingPost)}>
                 <Copy className="h-3.5 w-3.5 mr-1.5" />
                 Copy
               </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                className="rounded-xl text-destructive hover:text-destructive"
-                onClick={() => viewingPost && deletePost(viewingPost.id)}
-              >
+              <Button variant="outline" size="sm" className="rounded-xl text-destructive hover:text-destructive" onClick={() => viewingPost && deletePost(viewingPost.id)}>
                 <Trash2 className="h-3.5 w-3.5 mr-1.5" />
                 Delete
               </Button>

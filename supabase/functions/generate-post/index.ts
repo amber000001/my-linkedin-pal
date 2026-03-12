@@ -121,6 +121,102 @@ const MODE_PROMPTS: Record<string, string> = {
 }`,
 };
 
+interface PostWithMetrics {
+  post_text: string;
+  impressions: number;
+  reactions: number;
+  comments: number;
+  has_meme: boolean;
+  reaction_rate: number;
+  comment_rate: number;
+}
+
+function buildPerformanceContext(posts: PostWithMetrics[], isMeme: boolean): string {
+  if (!posts || posts.length === 0) return "";
+
+  // Separate by meme type
+  const relevant = posts.filter((p) => p.has_meme === isMeme);
+  const other = posts.filter((p) => p.has_meme !== isMeme);
+
+  // Score posts: weighted blend of reaction_rate (40%), comment_rate (40%), impressions (20% normalized)
+  const maxImpressions = Math.max(...posts.map((p) => p.impressions || 1), 1);
+  const scored = relevant.map((p) => ({
+    ...p,
+    score:
+      (p.reaction_rate || 0) * 0.4 +
+      (p.comment_rate || 0) * 0.4 +
+      ((p.impressions || 0) / maxImpressions) * 20 * 0.2,
+  }));
+  scored.sort((a, b) => b.score - a.score);
+
+  let context = "";
+
+  // Top performers
+  const topPosts = scored.slice(0, 3);
+  if (topPosts.length > 0) {
+    context += `\n\n## HIGH-PERFORMING ${isMeme ? "MEME" : "NON-MEME"} POSTS (prioritize these patterns):\n`;
+    topPosts.forEach((p, i) => {
+      context += `\n--- Top Post ${i + 1} (Impressions: ${p.impressions}, Reactions: ${p.reactions}, Comments: ${p.comments}, React Rate: ${p.reaction_rate}%, Comment Rate: ${p.comment_rate}%) ---\n${p.post_text}\n`;
+    });
+  }
+
+  // Regular posts for voice
+  const regularPosts = scored.slice(3, 6);
+  if (regularPosts.length > 0) {
+    context += `\n\n## OTHER ${isMeme ? "MEME" : "NON-MEME"} POSTS (for voice reference):\n`;
+    regularPosts.forEach((p, i) => {
+      context += `\n--- Post ${i + 1} ---\n${p.post_text}\n`;
+    });
+  }
+
+  // Cross-type reference (limited)
+  if (other.length > 0) {
+    const crossRef = other.slice(0, 2);
+    context += `\n\n## CROSS-REFERENCE POSTS (${isMeme ? "non-meme" : "meme"} style, for general voice):\n`;
+    crossRef.forEach((p, i) => {
+      context += `\n--- Post ${i + 1} ---\n${p.post_text}\n`;
+    });
+  }
+
+  return context;
+}
+
+function buildPerformanceLearningPrompt(posts: PostWithMetrics[]): string {
+  if (!posts || posts.length === 0) return "";
+
+  const withMetrics = posts.filter((p) => p.impressions > 0);
+  if (withMetrics.length < 2) return "";
+
+  // Derive simple insights
+  const avgReactRate = withMetrics.reduce((s, p) => s + (p.reaction_rate || 0), 0) / withMetrics.length;
+  const avgCommentRate = withMetrics.reduce((s, p) => s + (p.comment_rate || 0), 0) / withMetrics.length;
+
+  const topByReactions = [...withMetrics].sort((a, b) => (b.reaction_rate || 0) - (a.reaction_rate || 0)).slice(0, 2);
+  const topByComments = [...withMetrics].sort((a, b) => (b.comment_rate || 0) - (a.comment_rate || 0)).slice(0, 2);
+
+  let prompt = `\n\n## PERFORMANCE LEARNING SIGNALS
+Based on the author's historical performance data:
+- Average reaction rate: ${avgReactRate.toFixed(2)}%
+- Average comment rate: ${avgCommentRate.toFixed(2)}%
+
+Hooks from top-performing posts by engagement:`;
+
+  topByReactions.forEach((p) => {
+    const firstLine = p.post_text.split("\n").find((l: string) => l.trim()) || "";
+    prompt += `\n- "${firstLine.slice(0, 100)}" (React rate: ${p.reaction_rate}%)`;
+  });
+
+  prompt += `\n\nHooks from top-performing posts by comments:`;
+  topByComments.forEach((p) => {
+    const firstLine = p.post_text.split("\n").find((l: string) => l.trim()) || "";
+    prompt += `\n- "${firstLine.slice(0, 100)}" (Comment rate: ${p.comment_rate}%)`;
+  });
+
+  prompt += `\n\nUse these patterns as subtle guidance. Do NOT copy hooks. Borrow the style and energy, not the words. Never sacrifice authenticity for engagement.`;
+
+  return prompt;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -134,55 +230,59 @@ serve(async (req) => {
 
     const { mode, topic, freeText, url, memeTemplate } = await req.json();
 
-    // Fetch stored posts from repository for context
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
+    const isMemeMode = mode === "meme";
+
     let repositoryContext = "";
+    let performanceLearning = "";
+
     if (topic) {
-      // Primary: posts matching the selected topic
+      // Fetch posts for this topic with metrics
       const { data: topicPosts } = await supabase
         .from("linkedin_posts")
-        .select("post_text")
+        .select("post_text, impressions, reactions, comments, has_meme, reaction_rate, comment_rate")
         .eq("topic", topic)
         .order("created_at", { ascending: false })
-        .limit(5);
+        .limit(10);
 
-      // Secondary: other recent posts for general voice context
+      // Fetch other posts for general voice
       const { data: otherPosts } = await supabase
         .from("linkedin_posts")
-        .select("post_text")
+        .select("post_text, impressions, reactions, comments, has_meme, reaction_rate, comment_rate")
         .neq("topic", topic)
-        .order("created_at", { ascending: false })
-        .limit(3);
-
-      if (topicPosts && topicPosts.length > 0) {
-        repositoryContext += `\n\n## REFERENCE POSTS (same topic - match this style closely):\n`;
-        topicPosts.forEach((p, i) => {
-          repositoryContext += `\n--- Post ${i + 1} ---\n${p.post_text}\n`;
-        });
-      }
-
-      if (otherPosts && otherPosts.length > 0) {
-        repositoryContext += `\n\n## OTHER AUTHOR POSTS (for general voice reference):\n`;
-        otherPosts.forEach((p, i) => {
-          repositoryContext += `\n--- Post ${i + 1} ---\n${p.post_text}\n`;
-        });
-      }
-    } else if (mode === "free-dump") {
-      // For free-dump, get recent posts for voice matching
-      const { data: recentPosts } = await supabase
-        .from("linkedin_posts")
-        .select("post_text")
         .order("created_at", { ascending: false })
         .limit(5);
 
+      if (topicPosts && topicPosts.length > 0) {
+        repositoryContext = buildPerformanceContext(topicPosts as PostWithMetrics[], isMemeMode);
+      }
+
+      // Build performance learning from all posts
+      const allPosts = [...(topicPosts || []), ...(otherPosts || [])] as PostWithMetrics[];
+      performanceLearning = buildPerformanceLearningPrompt(allPosts);
+
+      // If no topic-specific high performers, add other posts for voice
+      if (!topicPosts || topicPosts.length === 0) {
+        if (otherPosts && otherPosts.length > 0) {
+          repositoryContext += `\n\n## AUTHOR REFERENCE POSTS (for voice matching):\n`;
+          otherPosts.slice(0, 3).forEach((p, i) => {
+            repositoryContext += `\n--- Post ${i + 1} ---\n${p.post_text}\n`;
+          });
+        }
+      }
+    } else if (mode === "free-dump") {
+      const { data: recentPosts } = await supabase
+        .from("linkedin_posts")
+        .select("post_text, impressions, reactions, comments, has_meme, reaction_rate, comment_rate")
+        .order("created_at", { ascending: false })
+        .limit(8);
+
       if (recentPosts && recentPosts.length > 0) {
-        repositoryContext += `\n\n## AUTHOR REFERENCE POSTS (match this voice and style):\n`;
-        recentPosts.forEach((p, i) => {
-          repositoryContext += `\n--- Post ${i + 1} ---\n${p.post_text}\n`;
-        });
+        repositoryContext = buildPerformanceContext(recentPosts as PostWithMetrics[], false);
+        performanceLearning = buildPerformanceLearningPrompt(recentPosts as PostWithMetrics[]);
       }
     }
 
@@ -213,7 +313,7 @@ serve(async (req) => {
         body: JSON.stringify({
           model: "google/gemini-3-flash-preview",
           messages: [
-            { role: "system", content: STYLE_SYSTEM_PROMPT + repositoryContext + "\n\n" + modePrompt },
+            { role: "system", content: STYLE_SYSTEM_PROMPT + repositoryContext + performanceLearning + "\n\n" + modePrompt },
             { role: "user", content: userMessage },
           ],
         }),
@@ -245,15 +345,12 @@ serve(async (req) => {
       throw new Error("No content in AI response");
     }
 
-    // Parse the JSON from the AI response
     let parsed;
     try {
-      // Try to extract JSON from potential markdown code blocks
       const jsonMatch = content.match(/```(?:json)?\s*([\s\S]*?)```/);
       const jsonStr = jsonMatch ? jsonMatch[1].trim() : content.trim();
       parsed = JSON.parse(jsonStr);
     } catch {
-      // If JSON parsing fails, return the raw content as the main post
       parsed = { mainPost: content };
     }
 

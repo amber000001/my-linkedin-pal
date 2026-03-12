@@ -16,21 +16,42 @@ export type Database = {
     Tables: {
       linkedin_posts: {
         Row: {
+          comment_rate: number | null
+          comments: number | null
           created_at: string
+          date_posted: string | null
+          has_meme: boolean | null
           id: string
+          impressions: number | null
           post_text: string
+          reaction_rate: number | null
+          reactions: number | null
           topic: string
         }
         Insert: {
+          comment_rate?: number | null
+          comments?: number | null
           created_at?: string
+          date_posted?: string | null
+          has_meme?: boolean | null
           id?: string
+          impressions?: number | null
           post_text: string
+          reaction_rate?: number | null
+          reactions?: number | null
           topic: string
         }
         Update: {
+          comment_rate?: number | null
+          comments?: number | null
           created_at?: string
+          date_posted?: string | null
+          has_meme?: boolean | null
           id?: string
+          impressions?: number | null
           post_text?: string
+          reaction_rate?: number | null
+          reactions?: number | null
           topic?: string
         }
         Relationships: []
