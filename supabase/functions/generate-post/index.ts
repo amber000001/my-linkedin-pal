@@ -127,18 +127,27 @@ interface PostWithMetrics {
   reactions: number;
   comments: number;
   has_meme: boolean;
+  uses_emojis: boolean;
+  post_type: string;
   reaction_rate: number;
   comment_rate: number;
+  structure: {
+    hook?: string;
+    observation?: string;
+    explanation?: string;
+    implications?: string;
+    learnings?: string[];
+    closing?: string;
+    hashtags?: string[];
+  } | null;
 }
 
 function buildPerformanceContext(posts: PostWithMetrics[], isMeme: boolean): string {
   if (!posts || posts.length === 0) return "";
 
-  // Separate by meme type
   const relevant = posts.filter((p) => p.has_meme === isMeme);
   const other = posts.filter((p) => p.has_meme !== isMeme);
 
-  // Score posts: weighted blend of reaction_rate (40%), comment_rate (40%), impressions (20% normalized)
   const maxImpressions = Math.max(...posts.map((p) => p.impressions || 1), 1);
   const scored = relevant.map((p) => ({
     ...p,
@@ -151,16 +160,17 @@ function buildPerformanceContext(posts: PostWithMetrics[], isMeme: boolean): str
 
   let context = "";
 
-  // Top performers
   const topPosts = scored.slice(0, 3);
   if (topPosts.length > 0) {
     context += `\n\n## HIGH-PERFORMING ${isMeme ? "MEME" : "NON-MEME"} POSTS (prioritize these patterns):\n`;
     topPosts.forEach((p, i) => {
-      context += `\n--- Top Post ${i + 1} (Impressions: ${p.impressions}, Reactions: ${p.reactions}, Comments: ${p.comments}, React Rate: ${p.reaction_rate}%, Comment Rate: ${p.comment_rate}%) ---\n${p.post_text}\n`;
+      context += `\n--- Top Post ${i + 1} (Type: ${p.post_type}, Emojis: ${p.uses_emojis ? "yes" : "no"}, Impressions: ${p.impressions}, Reactions: ${p.reactions}, Comments: ${p.comments}, React Rate: ${(p.reaction_rate * 100).toFixed(2)}%, Comment Rate: ${(p.comment_rate * 100).toFixed(2)}%) ---\n${p.post_text}\n`;
+      if (p.structure) {
+        context += `Structure: Hook="${p.structure.hook || ""}" | Observation="${p.structure.observation || ""}" | Closing="${p.structure.closing || ""}"\n`;
+      }
     });
   }
 
-  // Regular posts for voice
   const regularPosts = scored.slice(3, 6);
   if (regularPosts.length > 0) {
     context += `\n\n## OTHER ${isMeme ? "MEME" : "NON-MEME"} POSTS (for voice reference):\n`;
@@ -169,7 +179,6 @@ function buildPerformanceContext(posts: PostWithMetrics[], isMeme: boolean): str
     });
   }
 
-  // Cross-type reference (limited)
   if (other.length > 0) {
     const crossRef = other.slice(0, 2);
     context += `\n\n## CROSS-REFERENCE POSTS (${isMeme ? "non-meme" : "meme"} style, for general voice):\n`;
@@ -187,30 +196,55 @@ function buildPerformanceLearningPrompt(posts: PostWithMetrics[]): string {
   const withMetrics = posts.filter((p) => p.impressions > 0);
   if (withMetrics.length < 2) return "";
 
-  // Derive simple insights
   const avgReactRate = withMetrics.reduce((s, p) => s + (p.reaction_rate || 0), 0) / withMetrics.length;
   const avgCommentRate = withMetrics.reduce((s, p) => s + (p.comment_rate || 0), 0) / withMetrics.length;
 
-  const topByReactions = [...withMetrics].sort((a, b) => (b.reaction_rate || 0) - (a.reaction_rate || 0)).slice(0, 2);
-  const topByComments = [...withMetrics].sort((a, b) => (b.comment_rate || 0) - (a.comment_rate || 0)).slice(0, 2);
+  const emojiPosts = withMetrics.filter((p) => p.uses_emojis);
+  const noEmojiPosts = withMetrics.filter((p) => !p.uses_emojis);
+
+  const topByReactions = [...withMetrics].sort((a, b) => (b.reaction_rate || 0) - (a.reaction_rate || 0)).slice(0, 3);
+  const topByComments = [...withMetrics].sort((a, b) => (b.comment_rate || 0) - (a.comment_rate || 0)).slice(0, 3);
 
   let prompt = `\n\n## PERFORMANCE LEARNING SIGNALS
 Based on the author's historical performance data:
-- Average reaction rate: ${avgReactRate.toFixed(2)}%
-- Average comment rate: ${avgCommentRate.toFixed(2)}%
+- Average reaction rate: ${(avgReactRate * 100).toFixed(2)}%
+- Average comment rate: ${(avgCommentRate * 100).toFixed(2)}%`;
 
-Hooks from top-performing posts by engagement:`;
+  if (emojiPosts.length > 0 && noEmojiPosts.length > 0) {
+    const emojiAvgReact = emojiPosts.reduce((s, p) => s + (p.reaction_rate || 0), 0) / emojiPosts.length;
+    const noEmojiAvgReact = noEmojiPosts.reduce((s, p) => s + (p.reaction_rate || 0), 0) / noEmojiPosts.length;
+    prompt += `\n- Emoji posts avg reaction rate: ${(emojiAvgReact * 100).toFixed(2)}% | Non-emoji: ${(noEmojiAvgReact * 100).toFixed(2)}%`;
+  }
 
+  prompt += `\n\nHooks from top-performing posts by engagement:`;
   topByReactions.forEach((p) => {
-    const firstLine = p.post_text.split("\n").find((l: string) => l.trim()) || "";
-    prompt += `\n- "${firstLine.slice(0, 100)}" (React rate: ${p.reaction_rate}%)`;
+    const hookText = p.structure?.hook || p.post_text.split("\n").find((l: string) => l.trim()) || "";
+    prompt += `\n- "${hookText.slice(0, 120)}" (React rate: ${(p.reaction_rate * 100).toFixed(2)}%)`;
   });
 
   prompt += `\n\nHooks from top-performing posts by comments:`;
   topByComments.forEach((p) => {
-    const firstLine = p.post_text.split("\n").find((l: string) => l.trim()) || "";
-    prompt += `\n- "${firstLine.slice(0, 100)}" (Comment rate: ${p.comment_rate}%)`;
+    const hookText = p.structure?.hook || p.post_text.split("\n").find((l: string) => l.trim()) || "";
+    prompt += `\n- "${hookText.slice(0, 120)}" (Comment rate: ${(p.comment_rate * 100).toFixed(2)}%)`;
   });
+
+  // Structural patterns from top posts
+  const topAll = [...withMetrics].sort((a, b) => {
+    const scoreA = (a.reaction_rate || 0) * 0.4 + (a.comment_rate || 0) * 0.4 + (a.impressions / 100000) * 0.2;
+    const scoreB = (b.reaction_rate || 0) * 0.4 + (b.comment_rate || 0) * 0.4 + (b.impressions / 100000) * 0.2;
+    return scoreB - scoreA;
+  }).slice(0, 3);
+
+  const structuredTop = topAll.filter((p) => p.structure);
+  if (structuredTop.length > 0) {
+    prompt += `\n\nStructural patterns from top posts:`;
+    structuredTop.forEach((p) => {
+      if (p.structure) {
+        const hasLearnings = p.structure.learnings && p.structure.learnings.length > 0;
+        prompt += `\n- Type: ${p.post_type}, Emojis: ${p.uses_emojis ? "yes" : "no"}, Has learnings list: ${hasLearnings ? "yes" : "no"}`;
+      }
+    });
+  }
 
   prompt += `\n\nUse these patterns as subtle guidance. Do NOT copy hooks. Borrow the style and energy, not the words. Never sacrifice authenticity for engagement.`;
 
@@ -235,23 +269,22 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     const isMemeMode = mode === "meme";
+    const selectFields = "post_text, impressions, reactions, comments, has_meme, uses_emojis, post_type, reaction_rate, comment_rate, structure";
 
     let repositoryContext = "";
     let performanceLearning = "";
 
     if (topic) {
-      // Fetch posts for this topic with metrics
       const { data: topicPosts } = await supabase
         .from("linkedin_posts")
-        .select("post_text, impressions, reactions, comments, has_meme, reaction_rate, comment_rate")
+        .select(selectFields)
         .eq("topic", topic)
         .order("created_at", { ascending: false })
         .limit(10);
 
-      // Fetch other posts for general voice
       const { data: otherPosts } = await supabase
         .from("linkedin_posts")
-        .select("post_text, impressions, reactions, comments, has_meme, reaction_rate, comment_rate")
+        .select(selectFields)
         .neq("topic", topic)
         .order("created_at", { ascending: false })
         .limit(5);
@@ -260,11 +293,9 @@ serve(async (req) => {
         repositoryContext = buildPerformanceContext(topicPosts as PostWithMetrics[], isMemeMode);
       }
 
-      // Build performance learning from all posts
       const allPosts = [...(topicPosts || []), ...(otherPosts || [])] as PostWithMetrics[];
       performanceLearning = buildPerformanceLearningPrompt(allPosts);
 
-      // If no topic-specific high performers, add other posts for voice
       if (!topicPosts || topicPosts.length === 0) {
         if (otherPosts && otherPosts.length > 0) {
           repositoryContext += `\n\n## AUTHOR REFERENCE POSTS (for voice matching):\n`;
@@ -276,7 +307,7 @@ serve(async (req) => {
     } else if (mode === "free-dump") {
       const { data: recentPosts } = await supabase
         .from("linkedin_posts")
-        .select("post_text, impressions, reactions, comments, has_meme, reaction_rate, comment_rate")
+        .select(selectFields)
         .order("created_at", { ascending: false })
         .limit(8);
 
