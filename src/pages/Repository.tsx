@@ -6,6 +6,12 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   Select,
   SelectContent,
   SelectGroup,
@@ -14,10 +20,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { TOPIC_CATEGORIES, ALL_TOPICS } from "@/lib/topics";
 import { SparkleParticles } from "@/components/SparkleParticles";
 import {
-  Sparkles,
   Search,
   ArrowLeft,
   Upload,
@@ -27,6 +37,8 @@ import {
   Loader2,
   BookOpen,
   Plus,
+  ChevronRight,
+  Eye,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -42,8 +54,9 @@ export default function Repository() {
   const [posts, setPosts] = useState<LinkedInPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [filterTopic, setFilterTopic] = useState("all");
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [viewingPost, setViewingPost] = useState<LinkedInPost | null>(null);
+  const [openTopics, setOpenTopics] = useState<Record<string, boolean>>({});
 
   // Upload form state
   const [showForm, setShowForm] = useState(false);
@@ -73,7 +86,6 @@ export default function Repository() {
 
   const filtered = useMemo(() => {
     return posts.filter((p) => {
-      if (filterTopic !== "all" && p.topic !== filterTopic) return false;
       if (search.trim()) {
         const q = search.toLowerCase();
         const searchable = [p.post_text, p.topic].join(" ").toLowerCase();
@@ -81,7 +93,23 @@ export default function Repository() {
       }
       return true;
     });
-  }, [posts, filterTopic, search]);
+  }, [posts, search]);
+
+  // Group filtered posts by topic
+  const groupedByTopic = useMemo(() => {
+    const groups: Record<string, LinkedInPost[]> = {};
+    filtered.forEach((p) => {
+      if (!groups[p.topic]) groups[p.topic] = [];
+      groups[p.topic].push(p);
+    });
+    // Sort topics by TOPIC_CATEGORIES order
+    const orderedTopics = ALL_TOPICS.filter((t) => groups[t]);
+    // Add any topics not in ALL_TOPICS
+    Object.keys(groups).forEach((t) => {
+      if (!orderedTopics.includes(t)) orderedTopics.push(t);
+    });
+    return orderedTopics.map((t) => ({ topic: t, posts: groups[t] }));
+  }, [filtered]);
 
   const topicCounts = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -113,17 +141,20 @@ export default function Repository() {
     }
   };
 
-  const deletePost = async (id: string) => {
+  const deletePost = async (id: string, e?: React.MouseEvent) => {
+    e?.stopPropagation();
     const { error } = await supabase.from("linkedin_posts").delete().eq("id", id);
     if (error) {
       toast.error("Failed to delete");
     } else {
       setPosts((prev) => prev.filter((p) => p.id !== id));
+      if (viewingPost?.id === id) setViewingPost(null);
       toast.success("Removed from repository");
     }
   };
 
-  const copyPost = (post: LinkedInPost) => {
+  const copyPost = (post: LinkedInPost, e?: React.MouseEvent) => {
+    e?.stopPropagation();
     navigator.clipboard.writeText(post.post_text);
     setCopiedId(post.id);
     toast.success("Copied ✨");
@@ -134,6 +165,10 @@ export default function Repository() {
     const firstLine = text.split("\n").find((l) => l.trim());
     if (!firstLine) return "No content";
     return firstLine.length > 120 ? firstLine.slice(0, 120) + "..." : firstLine;
+  };
+
+  const toggleTopic = (topic: string) => {
+    setOpenTopics((prev) => ({ ...prev, [topic]: !prev[topic] }));
   };
 
   return (
@@ -251,89 +286,159 @@ export default function Repository() {
           </div>
         )}
 
-        {/* Filters */}
+        {/* Search */}
         <div className="glass-static rounded-2xl p-4">
-          <div className="flex flex-wrap gap-3">
-            <div className="relative flex-1 min-w-[200px]">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search repository..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="pl-9 glass border-border/40 h-10 rounded-xl"
-              />
-            </div>
-            <Select value={filterTopic} onValueChange={setFilterTopic}>
-              <SelectTrigger className="w-[220px] glass border-border/40 h-10 rounded-xl">
-                <SelectValue placeholder="Filter by topic" />
-              </SelectTrigger>
-              <SelectContent className="glass-static border-border/30 max-h-[300px]">
-                <SelectItem value="all">All Topics</SelectItem>
-                {ALL_TOPICS.map((t) => (
-                  <SelectItem key={t} value={t}>
-                    {t} {topicCounts[t] ? `(${topicCounts[t]})` : ""}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search repository..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-9 glass border-border/40 h-10 rounded-xl"
+            />
           </div>
         </div>
 
-        {/* Posts List */}
+        {/* Grouped Posts by Topic */}
         {loading ? (
           <div className="text-center py-16 text-muted-foreground font-body">Loading repository...</div>
-        ) : filtered.length === 0 ? (
+        ) : groupedByTopic.length === 0 ? (
           <div className="text-center py-16 text-muted-foreground font-body">
             {posts.length === 0
               ? "No posts in repository yet. Upload your LinkedIn posts to train the model! ✨"
-              : "No posts match your filters."}
+              : "No posts match your search."}
           </div>
         ) : (
-          <div className="space-y-4">
-            {filtered.map((post) => (
-              <div key={post.id} className="glass-static rounded-2xl p-5 sparkle-border">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap mb-2">
-                      <Badge variant="secondary" className="text-xs rounded-lg">
-                        {post.topic}
-                      </Badge>
-                      <span className="text-xs text-muted-foreground ml-auto">
-                        {new Date(post.created_at).toLocaleDateString("en-US", {
-                          month: "short",
-                          day: "numeric",
-                          year: "numeric",
-                        })}
+          <div className="space-y-3">
+            {groupedByTopic.map(({ topic: groupTopic, posts: groupPosts }) => (
+              <Collapsible
+                key={groupTopic}
+                open={openTopics[groupTopic] ?? false}
+                onOpenChange={() => toggleTopic(groupTopic)}
+              >
+                <CollapsibleTrigger asChild>
+                  <button className="w-full glass-static rounded-2xl p-4 flex items-center justify-between hover:glow-magic transition-all duration-200 cursor-pointer group">
+                    <div className="flex items-center gap-3">
+                      <ChevronRight
+                        className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${
+                          openTopics[groupTopic] ? "rotate-90" : ""
+                        }`}
+                      />
+                      <span className="font-display text-sm font-semibold text-foreground">
+                        {groupTopic}
                       </span>
+                      <Badge variant="secondary" className="text-xs rounded-lg">
+                        {groupPosts.length}
+                      </Badge>
                     </div>
-                    <p className="text-sm text-foreground/80 font-body line-clamp-3 whitespace-pre-line">
-                      {getPreview(post.post_text)}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2 mt-3">
-                  <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={() => copyPost(post)}>
-                    {copiedId === post.id ? (
-                      <Check className="h-3.5 w-3.5 mr-1" />
-                    ) : (
-                      <Copy className="h-3.5 w-3.5 mr-1" />
-                    )}
-                    Copy
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 text-xs text-destructive hover:text-destructive"
-                    onClick={() => deletePost(post.id)}
-                  >
-                    <Trash2 className="h-3.5 w-3.5 mr-1" /> Delete
-                  </Button>
-                </div>
-              </div>
+                  </button>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="mt-2 space-y-2 pl-4">
+                  {groupPosts.map((post) => (
+                    <div
+                      key={post.id}
+                      className="glass-static rounded-xl p-4 sparkle-border cursor-pointer hover:glow-magic transition-all duration-200"
+                      onClick={() => setViewingPost(post)}
+                    >
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1.5">
+                            <span className="text-xs text-muted-foreground">
+                              {new Date(post.created_at).toLocaleDateString("en-US", {
+                                month: "short",
+                                day: "numeric",
+                                year: "numeric",
+                              })}
+                            </span>
+                          </div>
+                          <p className="text-sm text-foreground/80 font-body line-clamp-2">
+                            {getPreview(post.post_text)}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-1 shrink-0">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7"
+                            onClick={(e) => { e.stopPropagation(); setViewingPost(post); }}
+                          >
+                            <Eye className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7"
+                            onClick={(e) => copyPost(post, e)}
+                          >
+                            {copiedId === post.id ? (
+                              <Check className="h-3.5 w-3.5" />
+                            ) : (
+                              <Copy className="h-3.5 w-3.5" />
+                            )}
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 text-destructive hover:text-destructive"
+                            onClick={(e) => deletePost(post.id, e)}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </CollapsibleContent>
+              </Collapsible>
             ))}
           </div>
         )}
       </main>
+
+      {/* View Post Dialog */}
+      <Dialog open={!!viewingPost} onOpenChange={(open) => !open && setViewingPost(null)}>
+        <DialogContent className="glass-static sm:max-w-2xl border-border/30 max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="font-display text-gradient text-lg flex items-center gap-2">
+              <Badge variant="secondary" className="text-xs rounded-lg">
+                {viewingPost?.topic}
+              </Badge>
+              <span className="text-xs text-muted-foreground font-body font-normal ml-auto">
+                {viewingPost && new Date(viewingPost.created_at).toLocaleDateString("en-US", {
+                  month: "short",
+                  day: "numeric",
+                  year: "numeric",
+                })}
+              </span>
+            </DialogTitle>
+          </DialogHeader>
+          <div className="mt-4">
+            <div className="glass rounded-xl p-5 text-sm text-foreground/90 font-body whitespace-pre-line leading-relaxed max-h-[55vh] overflow-y-auto">
+              {viewingPost?.post_text}
+            </div>
+            <div className="flex gap-2 mt-4">
+              <Button
+                variant="outline"
+                size="sm"
+                className="rounded-xl"
+                onClick={() => viewingPost && copyPost(viewingPost)}
+              >
+                <Copy className="h-3.5 w-3.5 mr-1.5" />
+                Copy
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="rounded-xl text-destructive hover:text-destructive"
+                onClick={() => viewingPost && deletePost(viewingPost.id)}
+              >
+                <Trash2 className="h-3.5 w-3.5 mr-1.5" />
+                Delete
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
