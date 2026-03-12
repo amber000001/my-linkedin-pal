@@ -128,7 +128,7 @@ export default function Repository() {
       console.error(error);
       toast.error("Failed to load repository");
     } else {
-      setPosts((data || []) as LinkedInPost[]);
+      setPosts((data || []) as unknown as LinkedInPost[]);
     }
     setLoading(false);
   };
