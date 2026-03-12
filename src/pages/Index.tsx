@@ -7,7 +7,7 @@ import { PostEditor } from "@/components/PostEditor";
 import { MemeGenerator } from "@/components/MemeGenerator";
 import { UploadPostDialog } from "@/components/UploadPostDialog";
 import { generatePost, type PostMode, type GenerateRequest, type GenerateResponse } from "@/lib/api";
-import { Sparkles, Clock } from "lucide-react";
+import { Sparkles, Clock, BookOpen } from "lucide-react";
 import { SparkleParticles } from "@/components/SparkleParticles";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -151,12 +151,20 @@ const Index = () => {
               variant="outline"
               size="sm"
               className="glass border-border/40 rounded-xl hover:glow-magic"
+              onClick={() => navigate("/repository")}
+            >
+              <BookOpen className="h-4 w-4 mr-2" />
+              Repository
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="glass border-border/40 rounded-xl hover:glow-magic"
               onClick={() => navigate("/history")}
             >
               <Clock className="h-4 w-4 mr-2" />
               History
             </Button>
-            <UploadPostDialog />
           </div>
         </div>
       </header>
