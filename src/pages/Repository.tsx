@@ -47,21 +47,43 @@ import {
   Heart,
   Image,
   Calendar,
+  Smile,
+  FileText,
 } from "lucide-react";
 import { toast } from "sonner";
+
+const POST_TYPES = [
+  { value: "thought_leadership", label: "Thought Leadership" },
+  { value: "observational", label: "Observational" },
+  { value: "meme", label: "Meme" },
+  { value: "personal", label: "Personal" },
+];
+
+interface PostStructure {
+  hook: string;
+  observation: string;
+  explanation: string;
+  implications: string;
+  learnings: string[];
+  closing: string;
+  hashtags: string[];
+}
 
 interface LinkedInPost {
   id: string;
   topic: string;
   post_text: string;
-  created_at: string;
+  post_type: string;
+  has_meme: boolean;
+  uses_emojis: boolean;
   date_posted: string | null;
+  created_at: string;
   impressions: number;
   reactions: number;
   comments: number;
-  has_meme: boolean;
   reaction_rate: number;
   comment_rate: number;
+  structure: PostStructure | null;
 }
 
 export default function Repository() {
@@ -76,13 +98,24 @@ export default function Repository() {
   // Upload form state
   const [showForm, setShowForm] = useState(false);
   const [topic, setTopic] = useState("");
+  const [postType, setPostType] = useState("thought_leadership");
   const [postText, setPostText] = useState("");
   const [datePosted, setDatePosted] = useState("");
   const [impressions, setImpressions] = useState("");
   const [reactions, setReactions] = useState("");
   const [commentsInput, setCommentsInput] = useState("");
   const [hasMeme, setHasMeme] = useState(false);
+  const [usesEmojis, setUsesEmojis] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Structure fields
+  const [hook, setHook] = useState("");
+  const [observation, setObservation] = useState("");
+  const [explanation, setExplanation] = useState("");
+  const [implications, setImplications] = useState("");
+  const [learnings, setLearnings] = useState("");
+  const [closing, setClosing] = useState("");
+  const [hashtags, setHashtags] = useState("");
 
   const fetchPosts = async () => {
     setLoading(true);
@@ -95,7 +128,7 @@ export default function Repository() {
       console.error(error);
       toast.error("Failed to load repository");
     } else {
-      setPosts((data || []) as LinkedInPost[]);
+      setPosts((data || []) as unknown as LinkedInPost[]);
     }
     setLoading(false);
   };
@@ -138,29 +171,63 @@ export default function Repository() {
 
   const resetForm = () => {
     setTopic("");
+    setPostType("thought_leadership");
     setPostText("");
     setDatePosted("");
     setImpressions("");
     setReactions("");
     setCommentsInput("");
     setHasMeme(false);
+    setUsesEmojis(true);
+    setHook("");
+    setObservation("");
+    setExplanation("");
+    setImplications("");
+    setLearnings("");
+    setClosing("");
+    setHashtags("");
   };
 
   const handleUpload = async () => {
-    if (!topic || !postText.trim()) return;
+    if (!topic || !postText.trim() || !datePosted) {
+      toast.error("Topic, post text, and date posted are required.");
+      return;
+    }
     setIsSubmitting(true);
     try {
+      const imp = parseInt(impressions) || 0;
+      const react = parseInt(reactions) || 0;
+      const comm = parseInt(commentsInput) || 0;
+
+      const structure: PostStructure = {
+        hook: hook.trim(),
+        observation: observation.trim(),
+        explanation: explanation.trim(),
+        implications: implications.trim(),
+        learnings: learnings.trim() ? learnings.split("\n").map((l) => l.trim()).filter(Boolean) : [],
+        closing: closing.trim(),
+        hashtags: hashtags.trim() ? hashtags.split(",").map((h) => h.trim()).filter(Boolean) : [],
+      };
+
+      const reactionRate = imp > 0 ? parseFloat((react / imp).toFixed(4)) : 0;
+      const commentRate = imp > 0 ? parseFloat((comm / imp).toFixed(4)) : 0;
+
       const { error } = await supabase.from("linkedin_posts").insert({
         topic,
-        post_text: postText.trim(),
-        date_posted: datePosted || null,
-        impressions: parseInt(impressions) || 0,
-        reactions: parseInt(reactions) || 0,
-        comments: parseInt(commentsInput) || 0,
+        post_type: postType,
+        post_text: postText,
+        date_posted: datePosted,
+        impressions: imp,
+        reactions: react,
+        comments: comm,
         has_meme: hasMeme,
+        uses_emojis: usesEmojis,
+        reaction_rate: reactionRate,
+        comment_rate: commentRate,
+        structure: structure as any,
       });
       if (error) throw error;
-      toast.success("Post uploaded to repository ✨");
+      toast.success("Post uploaded to intelligence repository ✨");
       resetForm();
       setShowForm(false);
       fetchPosts();
@@ -206,6 +273,8 @@ export default function Repository() {
     if (n >= 1000) return (n / 1000).toFixed(1) + "k";
     return n.toString();
   };
+
+  const getPostTypeLabel = (val: string) => POST_TYPES.find((t) => t.value === val)?.label || val;
 
   const MetricsBadges = ({ post }: { post: LinkedInPost }) => {
     if (!post.impressions && !post.reactions && !post.comments) return null;
@@ -284,56 +353,164 @@ export default function Repository() {
       <main className="relative mx-auto max-w-7xl px-6 py-8 space-y-6">
         {/* Upload Form */}
         {showForm && (
-          <div className="glass-static rounded-2xl p-6 sparkle-border space-y-4">
+          <div className="glass-static rounded-2xl p-6 sparkle-border space-y-5">
             <h2 className="font-display text-lg font-semibold text-gradient">📚 Upload LinkedIn Post</h2>
 
-            {/* Topic */}
-            <div>
-              <label className="text-sm font-medium text-secondary-foreground mb-1.5 block font-body">📂 Topic</label>
-              <Select value={topic} onValueChange={setTopic}>
-                <SelectTrigger className="glass border-border/40 text-foreground h-11 rounded-xl">
-                  <SelectValue placeholder="Select a topic..." />
-                </SelectTrigger>
-                <SelectContent className="glass-static border-border/30 max-h-[300px]">
-                  {TOPIC_CATEGORIES.map((category) => (
-                    <SelectGroup key={category.group}>
-                      <SelectLabel className="font-display text-xs text-muted-foreground">
-                        {category.group}
-                      </SelectLabel>
-                      {category.topics.map((t) => (
-                        <SelectItem key={t} value={t} className="text-sm">
-                          {t}{topicCounts[t] ? ` (${topicCounts[t]})` : ""}
-                        </SelectItem>
-                      ))}
-                    </SelectGroup>
-                  ))}
-                </SelectContent>
-              </Select>
+            {/* Row 1: Topic + Post Type */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm font-medium text-secondary-foreground mb-1.5 block font-body">📂 Topic</label>
+                <Select value={topic} onValueChange={setTopic}>
+                  <SelectTrigger className="glass border-border/40 text-foreground h-11 rounded-xl">
+                    <SelectValue placeholder="Select a topic..." />
+                  </SelectTrigger>
+                  <SelectContent className="glass-static border-border/30 max-h-[300px]">
+                    {TOPIC_CATEGORIES.map((category) => (
+                      <SelectGroup key={category.group}>
+                        <SelectLabel className="font-display text-xs text-muted-foreground">
+                          {category.group}
+                        </SelectLabel>
+                        {category.topics.map((t) => (
+                          <SelectItem key={t} value={t} className="text-sm">
+                            {t}{topicCounts[t] ? ` (${topicCounts[t]})` : ""}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-secondary-foreground mb-1.5 block font-body">
+                  <FileText className="h-3.5 w-3.5 inline mr-1" />
+                  Post Type
+                </label>
+                <Select value={postType} onValueChange={setPostType}>
+                  <SelectTrigger className="glass border-border/40 text-foreground h-11 rounded-xl">
+                    <SelectValue placeholder="Select post type..." />
+                  </SelectTrigger>
+                  <SelectContent className="glass-static border-border/30">
+                    {POST_TYPES.map((pt) => (
+                      <SelectItem key={pt.value} value={pt.value} className="text-sm">
+                        {pt.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
-            {/* Post Text */}
+            {/* Date + Toggles */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end">
+              <div>
+                <label className="text-sm font-medium text-secondary-foreground mb-1.5 block font-body">
+                  <Calendar className="h-3.5 w-3.5 inline mr-1" />
+                  Date Posted
+                </label>
+                <Input
+                  type="date"
+                  value={datePosted}
+                  onChange={(e) => setDatePosted(e.target.value)}
+                  className="glass border-border/40 text-foreground h-11 rounded-xl"
+                />
+              </div>
+              <div className="flex items-center gap-3 h-11">
+                <Switch id="has-meme" checked={hasMeme} onCheckedChange={setHasMeme} />
+                <Label htmlFor="has-meme" className="text-sm font-body text-secondary-foreground cursor-pointer">
+                  <Image className="h-3.5 w-3.5 inline mr-1" />
+                  Has Meme
+                </Label>
+              </div>
+              <div className="flex items-center gap-3 h-11">
+                <Switch id="uses-emojis" checked={usesEmojis} onCheckedChange={setUsesEmojis} />
+                <Label htmlFor="uses-emojis" className="text-sm font-body text-secondary-foreground cursor-pointer">
+                  <Smile className="h-3.5 w-3.5 inline mr-1" />
+                  Uses Emojis
+                </Label>
+              </div>
+            </div>
+
+            {/* Full Post Text */}
             <div>
-              <label className="text-sm font-medium text-secondary-foreground mb-1.5 block font-body">📝 Post Text</label>
+              <label className="text-sm font-medium text-secondary-foreground mb-1.5 block font-body">📝 Full Post Text</label>
               <Textarea
-                placeholder="Paste your full LinkedIn post here..."
+                placeholder="Paste your full LinkedIn post exactly as published..."
                 value={postText}
                 onChange={(e) => setPostText(e.target.value)}
                 className="glass border-border/40 text-foreground placeholder:text-muted-foreground/50 min-h-[180px] resize-y rounded-xl"
               />
             </div>
 
-            {/* Date Posted */}
-            <div>
-              <label className="text-sm font-medium text-secondary-foreground mb-1.5 block font-body">
-                <Calendar className="h-3.5 w-3.5 inline mr-1" />
-                Date Posted
-              </label>
-              <Input
-                type="date"
-                value={datePosted}
-                onChange={(e) => setDatePosted(e.target.value)}
-                className="glass border-border/40 text-foreground h-11 rounded-xl"
-              />
+            {/* Structure Breakdown */}
+            <div className="space-y-3">
+              <h3 className="text-sm font-medium text-secondary-foreground font-body">🧩 Structure Breakdown <span className="text-muted-foreground font-normal">(for learning patterns)</span></h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs text-muted-foreground mb-1 block">Hook (opening line)</label>
+                  <Input
+                    placeholder="The first line or thought..."
+                    value={hook}
+                    onChange={(e) => setHook(e.target.value)}
+                    className="glass border-border/40 text-foreground h-10 rounded-xl"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-muted-foreground mb-1 block">Observation</label>
+                  <Input
+                    placeholder="Real-life observation or framing..."
+                    value={observation}
+                    onChange={(e) => setObservation(e.target.value)}
+                    className="glass border-border/40 text-foreground h-10 rounded-xl"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground mb-1 block">Explanation</label>
+                <Textarea
+                  placeholder="The descriptive middle section..."
+                  value={explanation}
+                  onChange={(e) => setExplanation(e.target.value)}
+                  className="glass border-border/40 text-foreground placeholder:text-muted-foreground/50 min-h-[80px] resize-y rounded-xl"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground mb-1 block">Implications</label>
+                <Textarea
+                  placeholder="What this means for marketers, brands..."
+                  value={implications}
+                  onChange={(e) => setImplications(e.target.value)}
+                  className="glass border-border/40 text-foreground placeholder:text-muted-foreground/50 min-h-[60px] resize-y rounded-xl"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground mb-1 block">Learnings (one per line)</label>
+                <Textarea
+                  placeholder="Actionable takeaways, one per line..."
+                  value={learnings}
+                  onChange={(e) => setLearnings(e.target.value)}
+                  className="glass border-border/40 text-foreground placeholder:text-muted-foreground/50 min-h-[80px] resize-y rounded-xl"
+                />
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs text-muted-foreground mb-1 block">Closing</label>
+                  <Input
+                    placeholder="Final reflection..."
+                    value={closing}
+                    onChange={(e) => setClosing(e.target.value)}
+                    className="glass border-border/40 text-foreground h-10 rounded-xl"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-muted-foreground mb-1 block">Hashtags (comma-separated)</label>
+                  <Input
+                    placeholder="#EmailMarketing, #Deliverability..."
+                    value={hashtags}
+                    onChange={(e) => setHashtags(e.target.value)}
+                    className="glass border-border/40 text-foreground h-10 rounded-xl"
+                  />
+                </div>
+              </div>
             </div>
 
             {/* Performance Metrics */}
@@ -379,22 +556,13 @@ export default function Repository() {
               </div>
             </div>
 
-            {/* Has Meme */}
-            <div className="flex items-center gap-3">
-              <Switch id="has-meme" checked={hasMeme} onCheckedChange={setHasMeme} />
-              <Label htmlFor="has-meme" className="text-sm font-body text-secondary-foreground cursor-pointer">
-                <Image className="h-3.5 w-3.5 inline mr-1" />
-                Post includes a meme
-              </Label>
-            </div>
-
             <div className="flex gap-3">
               <Button
                 variant="generate"
                 size="lg"
                 className="flex-1 rounded-xl"
                 onClick={handleUpload}
-                disabled={!topic || !postText.trim() || isSubmitting}
+                disabled={!topic || !postText.trim() || !datePosted || isSubmitting}
               >
                 {isSubmitting ? (
                   <>
@@ -404,7 +572,7 @@ export default function Repository() {
                 ) : (
                   <>
                     <Upload className="h-4 w-4" />
-                    Save to Repository
+                    Save to Intelligence Repository
                   </>
                 )}
               </Button>
@@ -477,6 +645,9 @@ export default function Repository() {
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                            <Badge variant="outline" className="text-[10px] px-1.5 py-0 rounded-md border-border/40">
+                              {getPostTypeLabel(post.post_type)}
+                            </Badge>
                             <span className="text-xs text-muted-foreground">
                               {post.date_posted
                                 ? new Date(post.date_posted + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
@@ -513,14 +684,23 @@ export default function Repository() {
       <Dialog open={!!viewingPost} onOpenChange={(open) => !open && setViewingPost(null)}>
         <DialogContent className="glass-static sm:max-w-2xl border-border/30 max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="font-display text-gradient text-lg flex items-center gap-2">
+            <DialogTitle className="font-display text-gradient text-lg flex items-center gap-2 flex-wrap">
               <Badge variant="secondary" className="text-xs rounded-lg">
                 {viewingPost?.topic}
+              </Badge>
+              <Badge variant="outline" className="text-xs rounded-lg border-border/40">
+                {viewingPost && getPostTypeLabel(viewingPost.post_type)}
               </Badge>
               {viewingPost?.has_meme && (
                 <Badge variant="outline" className="text-xs rounded-lg border-border/40">
                   <Image className="h-3 w-3 mr-1" />
                   Meme
+                </Badge>
+              )}
+              {viewingPost?.uses_emojis && (
+                <Badge variant="outline" className="text-xs rounded-lg border-border/40">
+                  <Smile className="h-3 w-3 mr-1" />
+                  Emojis
                 </Badge>
               )}
               <span className="text-xs text-muted-foreground font-body font-normal ml-auto">
@@ -549,29 +729,88 @@ export default function Repository() {
               </div>
               <div>
                 <p className="text-xs text-muted-foreground mb-0.5">React Rate</p>
-                <p className="text-sm font-semibold text-foreground">{viewingPost.reaction_rate}%</p>
+                <p className="text-sm font-semibold text-foreground">{(viewingPost.reaction_rate * 100).toFixed(2)}%</p>
               </div>
               <div>
                 <p className="text-xs text-muted-foreground mb-0.5">Comment Rate</p>
-                <p className="text-sm font-semibold text-foreground">{viewingPost.comment_rate}%</p>
+                <p className="text-sm font-semibold text-foreground">{(viewingPost.comment_rate * 100).toFixed(2)}%</p>
               </div>
             </div>
           )}
 
+          {/* Post Text */}
           <div>
-            <div className="glass rounded-xl p-5 text-sm text-foreground/90 font-body whitespace-pre-line leading-relaxed max-h-[55vh] overflow-y-auto">
+            <div className="glass rounded-xl p-5 text-sm text-foreground/90 font-body whitespace-pre-line leading-relaxed max-h-[40vh] overflow-y-auto">
               {viewingPost?.post_text}
             </div>
-            <div className="flex gap-2 mt-4">
-              <Button variant="outline" size="sm" className="rounded-xl" onClick={() => viewingPost && copyPost(viewingPost)}>
-                <Copy className="h-3.5 w-3.5 mr-1.5" />
-                Copy
-              </Button>
-              <Button variant="outline" size="sm" className="rounded-xl text-destructive hover:text-destructive" onClick={() => viewingPost && deletePost(viewingPost.id)}>
-                <Trash2 className="h-3.5 w-3.5 mr-1.5" />
-                Delete
-              </Button>
+          </div>
+
+          {/* Structure Breakdown */}
+          {viewingPost?.structure && (
+            <div className="space-y-2">
+              <h3 className="text-xs font-medium text-muted-foreground font-body uppercase tracking-wider">🧩 Structure Breakdown</h3>
+              <div className="glass rounded-xl p-4 space-y-3 text-sm">
+                {viewingPost.structure.hook && (
+                  <div>
+                    <span className="text-xs text-muted-foreground font-medium">Hook:</span>
+                    <p className="text-foreground/80 font-body">{viewingPost.structure.hook}</p>
+                  </div>
+                )}
+                {viewingPost.structure.observation && (
+                  <div>
+                    <span className="text-xs text-muted-foreground font-medium">Observation:</span>
+                    <p className="text-foreground/80 font-body">{viewingPost.structure.observation}</p>
+                  </div>
+                )}
+                {viewingPost.structure.explanation && (
+                  <div>
+                    <span className="text-xs text-muted-foreground font-medium">Explanation:</span>
+                    <p className="text-foreground/80 font-body">{viewingPost.structure.explanation}</p>
+                  </div>
+                )}
+                {viewingPost.structure.implications && (
+                  <div>
+                    <span className="text-xs text-muted-foreground font-medium">Implications:</span>
+                    <p className="text-foreground/80 font-body">{viewingPost.structure.implications}</p>
+                  </div>
+                )}
+                {viewingPost.structure.learnings && viewingPost.structure.learnings.length > 0 && (
+                  <div>
+                    <span className="text-xs text-muted-foreground font-medium">Learnings:</span>
+                    <ul className="list-disc list-inside text-foreground/80 font-body space-y-0.5 mt-0.5">
+                      {viewingPost.structure.learnings.map((l, i) => (
+                        <li key={i}>{l}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {viewingPost.structure.closing && (
+                  <div>
+                    <span className="text-xs text-muted-foreground font-medium">Closing:</span>
+                    <p className="text-foreground/80 font-body">{viewingPost.structure.closing}</p>
+                  </div>
+                )}
+                {viewingPost.structure.hashtags && viewingPost.structure.hashtags.length > 0 && (
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="text-xs text-muted-foreground font-medium">Hashtags:</span>
+                    {viewingPost.structure.hashtags.map((h, i) => (
+                      <Badge key={i} variant="secondary" className="text-[10px] rounded-md">{h}</Badge>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
+          )}
+
+          <div className="flex gap-2 mt-2">
+            <Button variant="outline" size="sm" className="rounded-xl" onClick={() => viewingPost && copyPost(viewingPost)}>
+              <Copy className="h-3.5 w-3.5 mr-1.5" />
+              Copy
+            </Button>
+            <Button variant="outline" size="sm" className="rounded-xl text-destructive hover:text-destructive" onClick={() => viewingPost && deletePost(viewingPost.id)}>
+              <Trash2 className="h-3.5 w-3.5 mr-1.5" />
+              Delete
+            </Button>
           </div>
         </DialogContent>
       </Dialog>

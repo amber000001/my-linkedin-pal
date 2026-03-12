@@ -24,9 +24,12 @@ export type Database = {
           id: string
           impressions: number | null
           post_text: string
+          post_type: string
           reaction_rate: number | null
           reactions: number | null
+          structure: Json | null
           topic: string
+          uses_emojis: boolean
         }
         Insert: {
           comment_rate?: number | null
@@ -37,9 +40,12 @@ export type Database = {
           id?: string
           impressions?: number | null
           post_text: string
+          post_type?: string
           reaction_rate?: number | null
           reactions?: number | null
+          structure?: Json | null
           topic: string
+          uses_emojis?: boolean
         }
         Update: {
           comment_rate?: number | null
@@ -50,9 +56,12 @@ export type Database = {
           id?: string
           impressions?: number | null
           post_text?: string
+          post_type?: string
           reaction_rate?: number | null
           reactions?: number | null
+          structure?: Json | null
           topic?: string
+          uses_emojis?: boolean
         }
         Relationships: []
       }
