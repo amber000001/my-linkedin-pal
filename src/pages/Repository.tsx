@@ -60,13 +60,13 @@ const POST_TYPES = [
 ];
 
 interface PostStructure {
-  hook: string;
-  observation: string;
-  explanation: string;
-  implications: string;
-  learnings: string[];
-  closing: string;
-  hashtags: string[];
+  hook?: string;
+  observation?: string;
+  explanation?: string;
+  implications?: string;
+  learnings?: string[];
+  closing?: string;
+  hashtags?: string[];
 }
 
 interface LinkedInPost {
