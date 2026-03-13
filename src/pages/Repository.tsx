@@ -517,7 +517,8 @@ export default function Repository() {
                   />
                 </div>
               </div>
-            </div>
+              </CollapsibleContent>
+            </Collapsible>
 
             {/* Performance Metrics */}
             <div>
