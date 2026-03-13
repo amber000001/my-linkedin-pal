@@ -441,9 +441,15 @@ export default function Repository() {
               />
             </div>
 
-            {/* Structure Breakdown */}
-            <div className="space-y-3">
-              <h3 className="text-sm font-medium text-secondary-foreground font-body">🧩 Structure Breakdown <span className="text-muted-foreground font-normal">(for learning patterns)</span></h3>
+            {/* Structure Breakdown (Optional) */}
+            <Collapsible>
+              <CollapsibleTrigger asChild>
+                <button className="flex items-center gap-2 text-sm font-medium text-secondary-foreground font-body hover:text-foreground transition-colors group">
+                  <ChevronRight className="h-4 w-4 transition-transform group-data-[state=open]:rotate-90" />
+                  🧩 Structure Breakdown <span className="text-muted-foreground font-normal">(optional — for richer learning)</span>
+                </button>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="space-y-3 mt-3">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="text-xs text-muted-foreground mb-1 block">Hook (opening line)</label>
