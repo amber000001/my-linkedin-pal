@@ -199,15 +199,20 @@ export default function Repository() {
       const react = parseInt(reactions) || 0;
       const comm = parseInt(commentsInput) || 0;
 
-      const structure: PostStructure = {
-        hook: hook.trim(),
-        observation: observation.trim(),
-        explanation: explanation.trim(),
-        implications: implications.trim(),
-        learnings: learnings.trim() ? learnings.split("\n").map((l) => l.trim()).filter(Boolean) : [],
-        closing: closing.trim(),
-        hashtags: hashtags.trim() ? hashtags.split(",").map((h) => h.trim()).filter(Boolean) : [],
-      };
+      // Only build structure if at least one field is provided
+      const hasAnyStructure = [hook, observation, explanation, implications, learnings, closing, hashtags].some(f => f.trim());
+      
+      let structure: Partial<PostStructure> | null = null;
+      if (hasAnyStructure) {
+        structure = {};
+        if (hook.trim()) structure.hook = hook.trim();
+        if (observation.trim()) structure.observation = observation.trim();
+        if (explanation.trim()) structure.explanation = explanation.trim();
+        if (implications.trim()) structure.implications = implications.trim();
+        if (learnings.trim()) structure.learnings = learnings.split("\n").map((l) => l.trim()).filter(Boolean);
+        if (closing.trim()) structure.closing = closing.trim();
+        if (hashtags.trim()) structure.hashtags = hashtags.split(",").map((h) => h.trim()).filter(Boolean);
+      }
 
       const reactionRate = imp > 0 ? parseFloat((react / imp).toFixed(4)) : 0;
       const commentRate = imp > 0 ? parseFloat((comm / imp).toFixed(4)) : 0;
