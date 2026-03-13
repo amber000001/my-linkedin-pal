@@ -60,13 +60,13 @@ const POST_TYPES = [
 ];
 
 interface PostStructure {
-  hook: string;
-  observation: string;
-  explanation: string;
-  implications: string;
-  learnings: string[];
-  closing: string;
-  hashtags: string[];
+  hook?: string;
+  observation?: string;
+  explanation?: string;
+  implications?: string;
+  learnings?: string[];
+  closing?: string;
+  hashtags?: string[];
 }
 
 interface LinkedInPost {
@@ -199,15 +199,20 @@ export default function Repository() {
       const react = parseInt(reactions) || 0;
       const comm = parseInt(commentsInput) || 0;
 
-      const structure: PostStructure = {
-        hook: hook.trim(),
-        observation: observation.trim(),
-        explanation: explanation.trim(),
-        implications: implications.trim(),
-        learnings: learnings.trim() ? learnings.split("\n").map((l) => l.trim()).filter(Boolean) : [],
-        closing: closing.trim(),
-        hashtags: hashtags.trim() ? hashtags.split(",").map((h) => h.trim()).filter(Boolean) : [],
-      };
+      // Only build structure if at least one field is provided
+      const hasAnyStructure = [hook, observation, explanation, implications, learnings, closing, hashtags].some(f => f.trim());
+      
+      let structure: Partial<PostStructure> | null = null;
+      if (hasAnyStructure) {
+        structure = {};
+        if (hook.trim()) structure.hook = hook.trim();
+        if (observation.trim()) structure.observation = observation.trim();
+        if (explanation.trim()) structure.explanation = explanation.trim();
+        if (implications.trim()) structure.implications = implications.trim();
+        if (learnings.trim()) structure.learnings = learnings.split("\n").map((l) => l.trim()).filter(Boolean);
+        if (closing.trim()) structure.closing = closing.trim();
+        if (hashtags.trim()) structure.hashtags = hashtags.split(",").map((h) => h.trim()).filter(Boolean);
+      }
 
       const reactionRate = imp > 0 ? parseFloat((react / imp).toFixed(4)) : 0;
       const commentRate = imp > 0 ? parseFloat((comm / imp).toFixed(4)) : 0;
@@ -441,9 +446,15 @@ export default function Repository() {
               />
             </div>
 
-            {/* Structure Breakdown */}
-            <div className="space-y-3">
-              <h3 className="text-sm font-medium text-secondary-foreground font-body">🧩 Structure Breakdown <span className="text-muted-foreground font-normal">(for learning patterns)</span></h3>
+            {/* Structure Breakdown (Optional) */}
+            <Collapsible>
+              <CollapsibleTrigger asChild>
+                <button className="flex items-center gap-2 text-sm font-medium text-secondary-foreground font-body hover:text-foreground transition-colors group">
+                  <ChevronRight className="h-4 w-4 transition-transform group-data-[state=open]:rotate-90" />
+                  🧩 Structure Breakdown <span className="text-muted-foreground font-normal">(optional — for richer learning)</span>
+                </button>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="space-y-3 mt-3">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="text-xs text-muted-foreground mb-1 block">Hook (opening line)</label>
@@ -511,7 +522,8 @@ export default function Repository() {
                   />
                 </div>
               </div>
-            </div>
+              </CollapsibleContent>
+            </Collapsible>
 
             {/* Performance Metrics */}
             <div>
