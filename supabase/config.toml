@@ -2,3 +2,6 @@ project_id = "jodosqcirtfqbzivgwfy"
 
 [functions.generate-post]
 verify_jwt = false
+
+[functions.save-linkedin-post]
+verify_jwt = false

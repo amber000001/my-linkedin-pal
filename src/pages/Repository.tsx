@@ -214,31 +214,50 @@ export default function Repository() {
         if (hashtags.trim()) structure.hashtags = hashtags.split(",").map((h) => h.trim()).filter(Boolean);
       }
 
-      const reactionRate = imp > 0 ? parseFloat((react / imp).toFixed(4)) : 0;
-      const commentRate = imp > 0 ? parseFloat((comm / imp).toFixed(4)) : 0;
-
-      const { error } = await supabase.from("linkedin_posts").insert({
-        topic,
-        post_type: postType,
-        post_text: postText,
-        date_posted: datePosted,
-        impressions: imp,
-        reactions: react,
-        comments: comm,
-        has_meme: hasMeme,
-        uses_emojis: usesEmojis,
-        reaction_rate: reactionRate,
-        comment_rate: commentRate,
-        structure: structure as any,
+      const { data, error } = await supabase.functions.invoke("save-linkedin-post", {
+        body: {
+          topic,
+          post_type: postType,
+          post_text: postText,
+          date_posted: datePosted,
+          impressions: imp,
+          reactions: react,
+          comments: comm,
+          has_meme: hasMeme,
+          uses_emojis: usesEmojis,
+          structure,
+        },
       });
-      if (error) throw error;
+
+      if (error) {
+        let message = error.message || "Failed to upload post.";
+        const errorWithContext = error as typeof error & {
+          context?: { json?: () => Promise<{ error?: string }> };
+        };
+
+        if (errorWithContext.context?.json) {
+          try {
+            const details = await errorWithContext.context.json();
+            if (details?.error) message = details.error;
+          } catch {
+            // fall back to the function error message
+          }
+        }
+
+        throw new Error(message);
+      }
+
+      if (data?.error) {
+        throw new Error(data.error);
+      }
+
       toast.success("Post uploaded to intelligence repository ✨");
       resetForm();
       setShowForm(false);
       fetchPosts();
     } catch (e) {
       console.error(e);
-      toast.error("Failed to upload post.");
+      toast.error(e instanceof Error ? e.message : "Failed to upload post.");
     } finally {
       setIsSubmitting(false);
     }
