@@ -108,6 +108,7 @@ export default function Repository() {
   const [hasMeme, setHasMeme] = useState(false);
   const [usesEmojis, setUsesEmojis] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [retryPayload, setRetryPayload] = useState<Record<string, unknown> | null>(null);
 
   // Structure fields
   const [hook, setHook] = useState("");
