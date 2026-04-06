@@ -35,6 +35,7 @@ import {
   Upload,
   Trash2,
   Copy,
+  RotateCcw,
   Check,
   Loader2,
   BookOpen,
