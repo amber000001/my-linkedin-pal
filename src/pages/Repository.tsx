@@ -603,6 +603,17 @@ export default function Repository() {
             </div>
 
             <div className="flex gap-3">
+              {retryPayload && !isSubmitting && (
+                <Button
+                  variant="outline"
+                  size="lg"
+                  className="rounded-xl border-destructive/40 text-destructive hover:bg-destructive/10"
+                  onClick={() => submitPost(retryPayload)}
+                >
+                  <RotateCcw className="h-4 w-4 mr-1" />
+                  Retry
+                </Button>
+              )}
               <Button
                 variant="generate"
                 size="lg"
@@ -626,7 +637,7 @@ export default function Repository() {
                 variant="outline"
                 size="lg"
                 className="rounded-xl"
-                onClick={() => { setShowForm(false); resetForm(); }}
+                onClick={() => { setShowForm(false); resetForm(); setRetryPayload(null); }}
               >
                 Cancel
               </Button>
