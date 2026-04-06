@@ -160,8 +160,6 @@ serve(async (req) => {
         comments,
         has_meme: hasMeme,
         uses_emojis: usesEmojis,
-        reaction_rate: reactionRate,
-        comment_rate: commentRate,
         structure,
       })
       .select("*")
