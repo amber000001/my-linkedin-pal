@@ -35,6 +35,7 @@ import {
   Upload,
   Trash2,
   Copy,
+  RotateCcw,
   Check,
   Loader2,
   BookOpen,
@@ -107,6 +108,7 @@ export default function Repository() {
   const [hasMeme, setHasMeme] = useState(false);
   const [usesEmojis, setUsesEmojis] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [retryPayload, setRetryPayload] = useState<Record<string, unknown> | null>(null);
 
   // Structure fields
   const [hook, setHook] = useState("");
@@ -188,45 +190,12 @@ export default function Repository() {
     setHashtags("");
   };
 
-  const handleUpload = async () => {
-    if (!topic || !postText.trim() || !datePosted) {
-      toast.error("Topic, post text, and date posted are required.");
-      return;
-    }
+  const submitPost = async (payload: Record<string, unknown>) => {
     setIsSubmitting(true);
+    setRetryPayload(null);
     try {
-      const imp = parseInt(impressions) || 0;
-      const react = parseInt(reactions) || 0;
-      const comm = parseInt(commentsInput) || 0;
-
-      // Only build structure if at least one field is provided
-      const hasAnyStructure = [hook, observation, explanation, implications, learnings, closing, hashtags].some(f => f.trim());
-      
-      let structure: Partial<PostStructure> | null = null;
-      if (hasAnyStructure) {
-        structure = {};
-        if (hook.trim()) structure.hook = hook.trim();
-        if (observation.trim()) structure.observation = observation.trim();
-        if (explanation.trim()) structure.explanation = explanation.trim();
-        if (implications.trim()) structure.implications = implications.trim();
-        if (learnings.trim()) structure.learnings = learnings.split("\n").map((l) => l.trim()).filter(Boolean);
-        if (closing.trim()) structure.closing = closing.trim();
-        if (hashtags.trim()) structure.hashtags = hashtags.split(",").map((h) => h.trim()).filter(Boolean);
-      }
-
       const { data, error } = await supabase.functions.invoke("save-linkedin-post", {
-        body: {
-          topic,
-          post_type: postType,
-          post_text: postText,
-          date_posted: datePosted,
-          impressions: imp,
-          reactions: react,
-          comments: comm,
-          has_meme: hasMeme,
-          uses_emojis: usesEmojis,
-          structure,
-        },
+        body: payload,
       });
 
       if (error) {
@@ -257,10 +226,56 @@ export default function Repository() {
       fetchPosts();
     } catch (e) {
       console.error(e);
-      toast.error(e instanceof Error ? e.message : "Failed to upload post.");
+      setRetryPayload(payload);
+      const errorMsg = e instanceof Error ? e.message : "Failed to upload post.";
+      toast.error(errorMsg, {
+        duration: 8000,
+        action: {
+          label: "Retry",
+          onClick: () => submitPost(payload),
+        },
+      });
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleUpload = async () => {
+    if (!topic || !postText.trim() || !datePosted) {
+      toast.error("Topic, post text, and date posted are required.");
+      return;
+    }
+
+    const imp = parseInt(impressions) || 0;
+    const react = parseInt(reactions) || 0;
+    const comm = parseInt(commentsInput) || 0;
+
+    const hasAnyStructure = [hook, observation, explanation, implications, learnings, closing, hashtags].some(f => f.trim());
+    
+    let structure: Partial<PostStructure> | null = null;
+    if (hasAnyStructure) {
+      structure = {};
+      if (hook.trim()) structure.hook = hook.trim();
+      if (observation.trim()) structure.observation = observation.trim();
+      if (explanation.trim()) structure.explanation = explanation.trim();
+      if (implications.trim()) structure.implications = implications.trim();
+      if (learnings.trim()) structure.learnings = learnings.split("\n").map((l) => l.trim()).filter(Boolean);
+      if (closing.trim()) structure.closing = closing.trim();
+      if (hashtags.trim()) structure.hashtags = hashtags.split(",").map((h) => h.trim()).filter(Boolean);
+    }
+
+    await submitPost({
+      topic,
+      post_type: postType,
+      post_text: postText,
+      date_posted: datePosted,
+      impressions: imp,
+      reactions: react,
+      comments: comm,
+      has_meme: hasMeme,
+      uses_emojis: usesEmojis,
+      structure,
+    });
   };
 
   const deletePost = async (id: string, e?: React.MouseEvent) => {
@@ -588,6 +603,17 @@ export default function Repository() {
             </div>
 
             <div className="flex gap-3">
+              {retryPayload && !isSubmitting && (
+                <Button
+                  variant="outline"
+                  size="lg"
+                  className="rounded-xl border-destructive/40 text-destructive hover:bg-destructive/10"
+                  onClick={() => submitPost(retryPayload)}
+                >
+                  <RotateCcw className="h-4 w-4 mr-1" />
+                  Retry
+                </Button>
+              )}
               <Button
                 variant="generate"
                 size="lg"
@@ -611,7 +637,7 @@ export default function Repository() {
                 variant="outline"
                 size="lg"
                 className="rounded-xl"
-                onClick={() => { setShowForm(false); resetForm(); }}
+                onClick={() => { setShowForm(false); resetForm(); setRetryPayload(null); }}
               >
                 Cancel
               </Button>
