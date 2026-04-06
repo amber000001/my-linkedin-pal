@@ -143,8 +143,6 @@ serve(async (req) => {
     const hasMeme = getBoolean(body.has_meme, "Has meme");
     const usesEmojis = getBoolean(body.uses_emojis, "Uses emojis");
     const structure = normalizeStructure(body.structure);
-    const reactionRate = impressions > 0 ? Number((reactions / impressions).toFixed(4)) : 0;
-    const commentRate = impressions > 0 ? Number((comments / impressions).toFixed(4)) : 0;
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
