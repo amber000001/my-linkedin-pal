@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -89,6 +89,7 @@ interface LinkedInPost {
 
 export default function Repository() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [posts, setPosts] = useState<LinkedInPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -138,6 +139,19 @@ export default function Repository() {
   useEffect(() => {
     fetchPosts();
   }, []);
+
+  // Pre-fill upload form from URL params (e.g. when marking a post as "posted" from History)
+  useEffect(() => {
+    const prefillPost = searchParams.get("prefill_post");
+    const prefillTopic = searchParams.get("prefill_topic");
+    if (prefillPost) {
+      setPostText(prefillPost);
+      if (prefillTopic) setTopic(prefillTopic);
+      setShowForm(true);
+      // Clear params so refresh doesn't re-trigger
+      setSearchParams({}, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
 
   const filtered = useMemo(() => {
     return posts.filter((p) => {
