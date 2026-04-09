@@ -140,6 +140,19 @@ export default function Repository() {
     fetchPosts();
   }, []);
 
+  // Pre-fill upload form from URL params (e.g. when marking a post as "posted" from History)
+  useEffect(() => {
+    const prefillPost = searchParams.get("prefill_post");
+    const prefillTopic = searchParams.get("prefill_topic");
+    if (prefillPost) {
+      setPostText(prefillPost);
+      if (prefillTopic) setTopic(prefillTopic);
+      setShowForm(true);
+      // Clear params so refresh doesn't re-trigger
+      setSearchParams({}, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
+
   const filtered = useMemo(() => {
     return posts.filter((p) => {
       if (search.trim()) {
