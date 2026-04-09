@@ -104,6 +104,16 @@ export default function History() {
         prev.map((g) => (g.id === item.id ? { ...g, status } : g))
       );
       toast.success(`Marked as ${status}`);
+
+      // When marking as posted, navigate to Repository with post content pre-filled
+      if (status === "posted") {
+        const params = new URLSearchParams();
+        params.set("prefill_post", item.generated_post);
+        if (item.topic_dropdown_value) {
+          params.set("prefill_topic", item.topic_dropdown_value);
+        }
+        navigate(`/repository?${params.toString()}`);
+      }
     }
   };
 
