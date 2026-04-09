@@ -89,7 +89,7 @@ interface LinkedInPost {
 
 export default function Repository() {
   const navigate = useNavigate();
-  const [posts, setPosts] = useState<LinkedInPost[]>([]);
+  const [searchParams, setSearchParams] = useSearchParams();
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [copiedId, setCopiedId] = useState<string | null>(null);
