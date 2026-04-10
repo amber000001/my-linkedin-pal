@@ -210,11 +210,11 @@ const Index = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <div className="space-y-6">
               <PostOutput output={output} isLoading={isLoading} mode={mode} onRefine={handleRefine} />
+            </div>
+            <div className="space-y-6">
               {mode === "meme" && output?.memeIdeas && output.memeIdeas.length > 0 && (
                 <MemeGenerator memeIdeas={output.memeIdeas} />
               )}
-            </div>
-            <div>
               {output && <PostEditor output={output} />}
             </div>
           </div>
