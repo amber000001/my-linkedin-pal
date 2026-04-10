@@ -96,9 +96,9 @@ If the output reads like a generic AI post, it must be rewritten. Every post mus
 Return a valid JSON object. Do NOT wrap in markdown code blocks. Just raw JSON.`;
 
 const MODE_PROMPTS: Record<string, string> = {
-  meme: `Generate a meme-led LinkedIn post. Return JSON with:
+  meme: `Generate a meme-led LinkedIn post. The mainPost MUST be short and punchy — 4 to 5 lines maximum. No long explanations. Think snappy caption energy: set up the joke or insight in 2-3 lines, land it in 1-2 lines. Return JSON with:
 {
-  "mainPost": "The LinkedIn caption to accompany the meme (written in the user's voice)",
+  "mainPost": "A short, punchy 4-5 line LinkedIn caption to accompany the meme (written in the user's voice, keep it tight)",
   "memeIdeas": ["3 meme text ideas based on the topic"],
   "alternateHooks": ["2 alternate opening hooks"],
   "hashtags": ["3-5 relevant hashtags with #"],

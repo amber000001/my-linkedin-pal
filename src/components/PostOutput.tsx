@@ -49,120 +49,141 @@ export function PostOutput({ output, isLoading, mode, onRefine }: PostOutputProp
 
   if (!output) return null;
 
+  // Meme mode: alternate hooks → main post → hashtags → meme ideas → refine
+  // Other modes: main post → alternate hooks → alternate draft → hashtags → cta → refine
+  const isMeme = mode === "meme";
+
+  const mainPostSection = (
+    <div className="glass rounded-2xl p-6 sparkle-border">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="font-display text-lg font-semibold text-gradient">
+          {isMeme ? "✨ Meme Caption & Post" : "✨ Your Post"}
+        </h3>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => copyToClipboard(output.mainPost)}
+          className="text-muted-foreground hover:text-foreground hover:glow-magic"
+        >
+          {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+        </Button>
+      </div>
+      <div className="whitespace-pre-wrap text-foreground/90 leading-relaxed text-[15px] font-body">
+        {output.mainPost}
+      </div>
+    </div>
+  );
+
+  const alternateHooksSection = output.alternateHooks && output.alternateHooks.length > 0 && (
+    <div className="glass rounded-2xl p-6 sparkle-border">
+      <h3 className="font-display text-sm font-semibold text-secondary-foreground mb-3">
+        🪄 Alternate Hooks
+      </h3>
+      <ul className="space-y-2">
+        {output.alternateHooks.map((hook, i) => (
+          <li
+            key={i}
+            className="text-foreground/80 text-sm pl-3 border-l-2 border-primary/30 cursor-pointer hover:border-primary hover:glow-magic transition-all duration-300 rounded-r-lg py-1"
+            onClick={() => copyToClipboard(hook)}
+          >
+            {hook}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+
+  const hashtagsSection = output.hashtags && output.hashtags.length > 0 && (
+    <div className="flex flex-wrap gap-2">
+      {output.hashtags.map((tag, i) => (
+        <span
+          key={i}
+          className="text-xs px-3 py-1.5 rounded-full glass text-primary cursor-pointer hover:glow-magic transition-all duration-300"
+          onClick={() => copyToClipboard(tag)}
+        >
+          {tag}
+        </span>
+      ))}
+    </div>
+  );
+
+  const memeIdeasSection = output.memeIdeas && output.memeIdeas.length > 0 && (
+    <div className="glass rounded-2xl p-6 sparkle-border">
+      <h3 className="font-display text-sm font-semibold text-secondary-foreground mb-3">
+        🎭 Meme Ideas
+      </h3>
+      <ul className="space-y-2">
+        {output.memeIdeas.map((idea, i) => (
+          <li key={i} className="text-foreground/80 text-sm flex gap-2">
+            <span className="text-accent font-medium">{i + 1}.</span>
+            {idea}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+
+  const alternateDraftSection = output.alternateDraft && (
+    <div className="glass rounded-2xl p-6 sparkle-border">
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="font-display text-sm font-semibold text-secondary-foreground">
+          🔮 Tighter Alternate
+        </h3>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => copyToClipboard(output.alternateDraft!)}
+          className="text-muted-foreground hover:text-foreground"
+        >
+          <Copy className="h-3 w-3" />
+        </Button>
+      </div>
+      <div className="whitespace-pre-wrap text-foreground/80 leading-relaxed text-sm font-body">
+        {output.alternateDraft}
+      </div>
+    </div>
+  );
+
+  const ctaSection = output.cta && (
+    <div className="text-sm text-muted-foreground italic border-l-2 border-accent/30 pl-3">
+      CTA: {output.cta}
+    </div>
+  );
+
+  const refineSection = (
+    <div>
+      <p className="text-xs text-muted-foreground mb-2 font-body">🪄 Refine</p>
+      <div className="flex flex-wrap gap-2">
+        {REFINE_OPTIONS.map((opt) => (
+          <Button key={opt} variant="refine" size="sm" onClick={() => onRefine(opt)}>
+            {opt}
+          </Button>
+        ))}
+      </div>
+    </div>
+  );
+
   return (
     <div className="space-y-6">
-      {/* Main Post */}
-      <div className="glass rounded-2xl p-6 sparkle-border">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="font-display text-lg font-semibold text-gradient">
-            {mode === "meme" ? "✨ Meme Caption & Post" : "✨ Your Post"}
-          </h3>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => copyToClipboard(output.mainPost)}
-            className="text-muted-foreground hover:text-foreground hover:glow-magic"
-          >
-            {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-          </Button>
-        </div>
-        <div className="whitespace-pre-wrap text-foreground/90 leading-relaxed text-[15px] font-body">
-          {output.mainPost}
-        </div>
-      </div>
-
-      {/* Alternate Hooks */}
-      {output.alternateHooks && output.alternateHooks.length > 0 && (
-        <div className="glass rounded-2xl p-6 sparkle-border">
-          <h3 className="font-display text-sm font-semibold text-secondary-foreground mb-3">
-            🪄 Alternate Hooks
-          </h3>
-          <ul className="space-y-2">
-            {output.alternateHooks.map((hook, i) => (
-              <li
-                key={i}
-                className="text-foreground/80 text-sm pl-3 border-l-2 border-primary/30 cursor-pointer hover:border-primary hover:glow-magic transition-all duration-300 rounded-r-lg py-1"
-                onClick={() => copyToClipboard(hook)}
-              >
-                {hook}
-              </li>
-            ))}
-          </ul>
-        </div>
+      {isMeme ? (
+        <>
+          {alternateHooksSection}
+          {mainPostSection}
+          {hashtagsSection}
+          {memeIdeasSection}
+          {ctaSection}
+          {refineSection}
+        </>
+      ) : (
+        <>
+          {mainPostSection}
+          {alternateHooksSection}
+          {alternateDraftSection}
+          {hashtagsSection}
+          {ctaSection}
+          {refineSection}
+        </>
       )}
-
-      {/* Meme Ideas */}
-      {output.memeIdeas && output.memeIdeas.length > 0 && (
-        <div className="glass rounded-2xl p-6 sparkle-border">
-          <h3 className="font-display text-sm font-semibold text-secondary-foreground mb-3">
-            🎭 Meme Ideas
-          </h3>
-          <ul className="space-y-2">
-            {output.memeIdeas.map((idea, i) => (
-              <li key={i} className="text-foreground/80 text-sm flex gap-2">
-                <span className="text-accent font-medium">{i + 1}.</span>
-                {idea}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      {/* Alternate Draft */}
-      {output.alternateDraft && (
-        <div className="glass rounded-2xl p-6 sparkle-border">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="font-display text-sm font-semibold text-secondary-foreground">
-              🔮 Tighter Alternate
-            </h3>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => copyToClipboard(output.alternateDraft!)}
-              className="text-muted-foreground hover:text-foreground"
-            >
-              <Copy className="h-3 w-3" />
-            </Button>
-          </div>
-          <div className="whitespace-pre-wrap text-foreground/80 leading-relaxed text-sm font-body">
-            {output.alternateDraft}
-          </div>
-        </div>
-      )}
-
-      {/* Hashtags */}
-      {output.hashtags && output.hashtags.length > 0 && (
-        <div className="flex flex-wrap gap-2">
-          {output.hashtags.map((tag, i) => (
-            <span
-              key={i}
-              className="text-xs px-3 py-1.5 rounded-full glass text-primary cursor-pointer hover:glow-magic transition-all duration-300"
-              onClick={() => copyToClipboard(tag)}
-            >
-              {tag}
-            </span>
-          ))}
-        </div>
-      )}
-
-      {/* CTA */}
-      {output.cta && (
-        <div className="text-sm text-muted-foreground italic border-l-2 border-accent/30 pl-3">
-          CTA: {output.cta}
-        </div>
-      )}
-
-      {/* Refine Buttons */}
-      <div>
-        <p className="text-xs text-muted-foreground mb-2 font-body">🪄 Refine</p>
-        <div className="flex flex-wrap gap-2">
-          {REFINE_OPTIONS.map((opt) => (
-            <Button key={opt} variant="refine" size="sm" onClick={() => onRefine(opt)}>
-              {opt}
-            </Button>
-          ))}
-        </div>
-      </div>
     </div>
   );
 }
