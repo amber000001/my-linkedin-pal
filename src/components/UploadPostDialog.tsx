@@ -103,6 +103,16 @@ export function UploadPostDialog() {
               placeholder="Paste your full LinkedIn post here..."
               value={postText}
               onChange={(e) => setPostText(e.target.value)}
+              onPaste={(e) => {
+                e.preventDefault();
+                const pasted = e.clipboardData.getData("text");
+                const cleaned = pasted.replace(/hashtag\s*#/gi, "#");
+                const textarea = e.currentTarget;
+                const start = textarea.selectionStart;
+                const end = textarea.selectionEnd;
+                const newText = postText.slice(0, start) + cleaned + postText.slice(end);
+                setPostText(newText);
+              }}
               className="glass border-border/40 text-foreground placeholder:text-muted-foreground/50 min-h-[200px] resize-y rounded-xl"
             />
           </div>
