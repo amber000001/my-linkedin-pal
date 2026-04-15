@@ -59,7 +59,7 @@ Follow this flow naturally (not rigidly):
 - NO over-explaining
 - NO sounding preachy or self-righteous
 - NO bullet-point listicles unless explicitly asked
-- NO emojis in body text (only in hashtags if needed)
+- Emojis ARE allowed in body text — but use them sparingly and naturally, guided by the EMOJI INTELLIGENCE section below. Place them as accent points (start of a line, before a key phrase, or in closings), never cluttering every sentence.
 - NO overly dramatic tone, no motivational clichés, no salesy language
 - NO very short fragmented sentences for dramatic effect
 
@@ -210,10 +210,37 @@ Based on the author's historical performance data:
 - Average reaction rate: ${(avgReactRate * 100).toFixed(2)}%
 - Average comment rate: ${(avgCommentRate * 100).toFixed(2)}%`;
 
+  // Emoji intelligence
+  prompt += `\n\n## EMOJI INTELLIGENCE`;
+
   if (emojiPosts.length > 0 && noEmojiPosts.length > 0) {
     const emojiAvgReact = emojiPosts.reduce((s, p) => s + (p.reaction_rate || 0), 0) / emojiPosts.length;
     const noEmojiAvgReact = noEmojiPosts.reduce((s, p) => s + (p.reaction_rate || 0), 0) / noEmojiPosts.length;
+    const emojiAvgComment = emojiPosts.reduce((s, p) => s + (p.comment_rate || 0), 0) / emojiPosts.length;
+    const noEmojiAvgComment = noEmojiPosts.reduce((s, p) => s + (p.comment_rate || 0), 0) / noEmojiPosts.length;
+    const emojiWins = emojiAvgReact > noEmojiAvgReact;
+    
+    prompt += `\n- Posts with emojis: ${emojiPosts.length} | Without: ${noEmojiPosts.length}`;
     prompt += `\n- Emoji posts avg reaction rate: ${(emojiAvgReact * 100).toFixed(2)}% | Non-emoji: ${(noEmojiAvgReact * 100).toFixed(2)}%`;
+    prompt += `\n- Emoji posts avg comment rate: ${(emojiAvgComment * 100).toFixed(2)}% | Non-emoji: ${(noEmojiAvgComment * 100).toFixed(2)}%`;
+    prompt += `\n- Recommendation: ${emojiWins ? "Emojis correlate with higher engagement — use 2-4 emojis naturally in the post." : "Non-emoji posts perform better — use emojis very sparingly (0-1 max)."}`;
+  } else if (emojiPosts.length > 0) {
+    prompt += `\n- All ${emojiPosts.length} posts use emojis — maintain this style with 2-4 emojis per post.`;
+  } else if (noEmojiPosts.length > 0) {
+    prompt += `\n- None of the ${noEmojiPosts.length} posts use emojis — keep emoji usage minimal (0-1).`;
+  }
+
+  // Extract actual emojis from top posts to learn style
+  const emojiRegex = /[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{FE00}-\u{FE0F}\u{1FA00}-\u{1FA6F}\u{1FA70}-\u{1FAF8}]/gu;
+  const emojiUsageMap: Record<string, number> = {};
+  withMetrics.filter(p => p.uses_emojis).forEach(p => {
+    const found = p.post_text.match(emojiRegex) || [];
+    found.forEach(e => { emojiUsageMap[e] = (emojiUsageMap[e] || 0) + 1; });
+  });
+  const topEmojis = Object.entries(emojiUsageMap).sort((a, b) => b[1] - a[1]).slice(0, 10);
+  if (topEmojis.length > 0) {
+    prompt += `\n- Author's frequently used emojis: ${topEmojis.map(([e, c]) => `${e}(${c}x)`).join(" ")}`;
+    prompt += `\n- Use these familiar emojis when appropriate. Do NOT introduce random or uncommon emojis.`;
   }
 
   prompt += `\n\nHooks from top-performing posts by engagement:`;
