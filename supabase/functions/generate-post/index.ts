@@ -332,21 +332,57 @@ serve(async (req) => {
         }
       }
     } else if (mode === "free-dump") {
-      const { data: recentPosts } = await supabase
-        .from("linkedin_posts")
-        .select(selectFields)
-        .order("created_at", { ascending: false })
-        .limit(8);
+      const queryTopic = topic || null;
+      if (queryTopic) {
+        const { data: topicPosts } = await supabase
+          .from("linkedin_posts")
+          .select(selectFields)
+          .eq("topic", queryTopic)
+          .order("created_at", { ascending: false })
+          .limit(10);
 
-      if (recentPosts && recentPosts.length > 0) {
-        repositoryContext = buildPerformanceContext(recentPosts as PostWithMetrics[], false);
-        performanceLearning = buildPerformanceLearningPrompt(recentPosts as PostWithMetrics[]);
+        const { data: otherPosts } = await supabase
+          .from("linkedin_posts")
+          .select(selectFields)
+          .neq("topic", queryTopic)
+          .order("created_at", { ascending: false })
+          .limit(5);
+
+        if (topicPosts && topicPosts.length > 0) {
+          repositoryContext = buildPerformanceContext(topicPosts as PostWithMetrics[], false);
+        }
+        const allPosts = [...(topicPosts || []), ...(otherPosts || [])] as PostWithMetrics[];
+        performanceLearning = buildPerformanceLearningPrompt(allPosts);
+
+        if (!topicPosts || topicPosts.length === 0) {
+          if (otherPosts && otherPosts.length > 0) {
+            repositoryContext += `\n\n## AUTHOR REFERENCE POSTS (for voice matching):\n`;
+            otherPosts.slice(0, 3).forEach((p, i) => {
+              repositoryContext += `\n--- Post ${i + 1} ---\n${p.post_text}\n`;
+            });
+          }
+        }
+      } else {
+        const { data: recentPosts } = await supabase
+          .from("linkedin_posts")
+          .select(selectFields)
+          .order("created_at", { ascending: false })
+          .limit(8);
+
+        if (recentPosts && recentPosts.length > 0) {
+          repositoryContext = buildPerformanceContext(recentPosts as PostWithMetrics[], false);
+          performanceLearning = buildPerformanceLearningPrompt(recentPosts as PostWithMetrics[]);
+        }
       }
     }
 
     let userMessage = "";
     if (mode === "free-dump") {
       userMessage = `Convert these raw notes into a polished LinkedIn post:\n\n${freeText}`;
+      if (topic) userMessage += `\nTopic/Category: ${topic}`;
+      if (toneTags && toneTags.length > 0) {
+        userMessage += `\n\nTONE DIRECTION: Make the post ${toneTags.join(", ")}. Infuse these tones naturally throughout — don't force it, let it feel authentic.`;
+      }
     } else if (mode === "meme") {
       userMessage = `Create a meme-led LinkedIn post about: ${topic}`;
       if (memeTemplate) userMessage += `\nMeme template/reference: ${memeTemplate}`;
