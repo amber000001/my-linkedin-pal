@@ -8,6 +8,7 @@ export interface GenerateRequest {
   freeText?: string;
   url?: string;
   memeTemplate?: string;
+  toneTags?: string[];
 }
 
 export interface GenerateResponse {
