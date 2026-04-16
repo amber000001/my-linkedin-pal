@@ -289,7 +289,7 @@ serve(async (req) => {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    const { mode, topic, freeText, url, memeTemplate } = await req.json();
+    const { mode, topic, freeText, url, memeTemplate, toneTags } = await req.json();
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
