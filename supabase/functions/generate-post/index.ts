@@ -448,6 +448,41 @@ serve(async (req) => {
       parsed = { mainPost: content };
     }
 
+    // Post-processing: sanitize banned patterns from all text fields
+    const sanitizeText = (text: string): string => {
+      let result = text;
+      // Replace em dashes with spaced hyphens
+      result = result.replace(/—/g, " - ");
+      // Remove banned phrases (case-insensitive)
+      const bannedPhrases = [
+        /here'?s the thing[,:.]?/gi,
+        /here'?s the kicker[,:.]?/gi,
+        /here'?s the reality[,:.]?/gi,
+        /in today'?s digital landscape/gi,
+        /as we navigate the evolving ecosystem/gi,
+        /game changer/gi,
+        /unlock the power of/gi,
+        /it'?s not about ([^,.]+), it'?s about/gi,
+      ];
+      for (const pattern of bannedPhrases) {
+        result = result.replace(pattern, "").replace(/\n{3,}/g, "\n\n").trim();
+      }
+      // Clean up double spaces left behind
+      result = result.replace(/ {2,}/g, " ");
+      return result;
+    };
+
+    // Apply sanitization to all string fields in parsed output
+    for (const key of Object.keys(parsed)) {
+      if (typeof parsed[key] === "string") {
+        parsed[key] = sanitizeText(parsed[key]);
+      } else if (Array.isArray(parsed[key])) {
+        parsed[key] = parsed[key].map((item: unknown) =>
+          typeof item === "string" ? sanitizeText(item) : item
+        );
+      }
+    }
+
     return new Response(JSON.stringify(parsed), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
