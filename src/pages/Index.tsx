@@ -48,8 +48,24 @@ const Index = () => {
       setReuseFreeText(item.input_text || undefined);
       setReuseUrl(item.input_url || undefined);
       setReuseMemeTemplate(item.meme_template || undefined);
+      // Load the previously generated output so the editor opens ready to edit
+      setOutput({
+        mainPost: item.generated_post,
+        alternateHooks: item.alternate_hooks || [],
+        memeIdeas: item.meme_ideas || [],
+        alternateDraft: item.alternate_draft || undefined,
+        hashtags: item.hashtags || [],
+        cta: item.cta_options || undefined,
+        commentReplies: item.comment_replies || [],
+      });
+      setLastRequest({
+        topic: item.topic_dropdown_value || item.topic || undefined,
+        freeText: item.input_text || undefined,
+        url: item.input_url || undefined,
+        memeTemplate: item.meme_template || undefined,
+      });
       setSearchParams({}, { replace: true });
-      toast.success("Draft loaded for reuse ✨");
+      toast.success("Draft loaded for editing ✨");
     };
     loadReuse();
   }, [searchParams, setSearchParams]);
