@@ -384,6 +384,27 @@ serve(async (req) => {
 
     const modePrompt = MODE_PROMPTS[mode] || MODE_PROMPTS["thought-leadership"];
 
+    // For "ride the wave" news posts, override the deliverability framing entirely.
+    const newsRideOverride = isNewsRideMode
+      ? `\n\n## CRITICAL OVERRIDE - WAVE-RIDING MODE
+This post is the author riding a trending news/cultural/business wave. It is NOT about email deliverability, NOT about email marketing, NOT about martech unless the trending topic itself is martech.
+
+DO:
+- React to the trending topic with the author's personal, observational point of view as a marketer/professional/human
+- Stay in the author's voice (calm, observational, occasionally witty, never corporate)
+- Make a sharp, original take - what most people are missing, an angle nobody else is taking, a contrarian read, or a connect-the-dots insight
+- Keep it conversational and timely
+
+DO NOT:
+- Force a deliverability angle, an inbox metaphor, or an email marketing lesson
+- Pivot the post into "and that's just like email deliverability..."
+- Use any of the "PREFERRED VOCABULARY" terms (audit, inbox placement, reputation monitoring, etc.) unless the trending topic is literally about email
+- Treat the "RECURRING INSIGHTS" section as required - those are deliverability-only
+- Invent facts, numbers, quotes, or details about the news event. Stick to what the user provided in the reference.
+
+The voice is the author. The subject is the trend.`
+      : "";
+
     const response = await fetch(
       "https://ai.gateway.lovable.dev/v1/chat/completions",
       {
@@ -395,7 +416,7 @@ serve(async (req) => {
         body: JSON.stringify({
           model: "google/gemini-3-flash-preview",
           messages: [
-            { role: "system", content: STYLE_SYSTEM_PROMPT + repositoryContext + performanceLearning + "\n\n" + modePrompt },
+            { role: "system", content: STYLE_SYSTEM_PROMPT + repositoryContext + performanceLearning + newsRideOverride + "\n\n" + modePrompt },
             { role: "user", content: userMessage },
           ],
         }),
