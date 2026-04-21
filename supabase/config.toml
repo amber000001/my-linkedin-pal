@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.save-linkedin-post]
 verify_jwt = false
+
+[functions.fetch-trending-topics]
+verify_jwt = false
