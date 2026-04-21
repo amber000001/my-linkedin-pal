@@ -5,6 +5,34 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+async function checkUrl(url: string): Promise<boolean> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 5000);
+  try {
+    const headRes = await fetch(url, {
+      method: "HEAD",
+      redirect: "follow",
+      signal: controller.signal,
+      headers: { "User-Agent": "Mozilla/5.0 (compatible; LinkContentBot/1.0)" },
+    });
+    if (headRes.ok || (headRes.status >= 300 && headRes.status < 400)) return true;
+    if (headRes.status === 405 || headRes.status === 403) {
+      const getRes = await fetch(url, {
+        method: "GET",
+        redirect: "follow",
+        signal: controller.signal,
+        headers: { "User-Agent": "Mozilla/5.0 (compatible; LinkContentBot/1.0)" },
+      });
+      return getRes.ok;
+    }
+    return false;
+  } catch {
+    return false;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -52,45 +80,15 @@ Use real, current information from web search. Do NOT fabricate URLs.`;
         model: "google/gemini-2.5-flash",
         messages: [
           { role: "system", content: systemPrompt },
-          { role: "user", content: `Give me the top 8 trending topics from the last 7 days in ${regionLabel}.` },
-        ],
-        tools: [
           {
-            type: "function",
-            function: {
-              name: "return_trending_topics",
-              description: "Return the curated list of trending topics.",
-              parameters: {
-                type: "object",
-                properties: {
-                  topics: {
-                    type: "array",
-                    items: {
-                      type: "object",
-                      properties: {
-                        title: { type: "string" },
-                        summary: { type: "string" },
-                        angle: { type: "string" },
-                        source_url: { type: "string" },
-                        source_name: { type: "string" },
-                        category: {
-                          type: "string",
-                          enum: ["marketing", "martech", "tech", "business", "ai", "culture", "startup"],
-                        },
-                        heat: { type: "string" },
-                      },
-                      required: ["title", "summary", "angle", "source_url", "source_name", "category", "heat"],
-                      additionalProperties: false,
-                    },
-                  },
-                },
-                required: ["topics"],
-                additionalProperties: false,
-              },
-            },
+            role: "user",
+            content: `Give me the top 8 trending topics from the last 7 days in ${regionLabel}. Return ONLY raw JSON (no markdown, no code fences) in this exact shape:
+{"topics":[{"title":"","summary":"","angle":"","source_url":"","source_name":"","category":"","heat":""}]}
+
+CRITICAL: source_url must be a REAL article URL you actually saw in search results. Do NOT guess, do NOT construct URLs from patterns, do NOT invent slugs. If you can't recall an exact URL, use the publication's homepage (e.g. https://techcrunch.com) instead of fabricating a path.`,
           },
         ],
-        tool_choice: { type: "function", function: { name: "return_trending_topics" } },
+        tools: [{ type: "google_search_retrieval" }],
       }),
     });
 
@@ -116,11 +114,45 @@ Use real, current information from web search. Do NOT fabricate URLs.`;
     }
 
     const data = await response.json();
-    const toolCall = data?.choices?.[0]?.message?.tool_calls?.[0];
-    const args = toolCall?.function?.arguments;
-    const parsed = typeof args === "string" ? JSON.parse(args) : args;
+    const content: string = data?.choices?.[0]?.message?.content || "";
 
-    return new Response(JSON.stringify({ topics: parsed?.topics || [] }), {
+    // Extract JSON from possibly-fenced content
+    let parsed: { topics?: any[] } = {};
+    try {
+      const fenced = content.match(/```(?:json)?\s*([\s\S]*?)```/);
+      const jsonStr = fenced ? fenced[1].trim() : content.trim();
+      // Find first { ... last }
+      const start = jsonStr.indexOf("{");
+      const end = jsonStr.lastIndexOf("}");
+      parsed = JSON.parse(start >= 0 && end > start ? jsonStr.slice(start, end + 1) : jsonStr);
+    } catch (err) {
+      console.error("Failed to parse trending topics JSON:", err, "raw:", content.slice(0, 500));
+    }
+
+    const rawTopics: any[] = Array.isArray(parsed?.topics) ? parsed.topics : [];
+
+    // Validate URLs in parallel (HEAD with GET fallback) and drop / homepage-fallback broken ones
+    const validated = await Promise.all(
+      rawTopics.map(async (t) => {
+        const url: string = t?.source_url || "";
+        if (!url || !/^https?:\/\//i.test(url)) return { ...t, source_url: "" };
+        const ok = await checkUrl(url);
+        if (ok) return t;
+        // Fall back to origin (homepage) so the user gets a working link
+        try {
+          const origin = new URL(url).origin;
+          const originOk = await checkUrl(origin);
+          return { ...t, source_url: originOk ? origin : "" };
+        } catch {
+          return { ...t, source_url: "" };
+        }
+      })
+    );
+
+    // Drop topics that ended up with no working URL at all
+    const topics = validated.filter((t) => !!t.source_url);
+
+    return new Response(JSON.stringify({ topics }), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
