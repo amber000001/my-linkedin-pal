@@ -91,7 +91,7 @@ export function TrendingTopicsDialog({ open, onOpenChange, region, onSelect }: P
             {topics.map((t, i) => (
               <div
                 key={i}
-                className="glass rounded-2xl p-4 border border-border/30 hover:border-primary/40 transition-all hover:glow-magic cursor-pointer group"
+                className="glass rounded-2xl p-4 border border-border/30 hover:border-primary/40 transition-colors duration-200 cursor-pointer group"
                 onClick={() => {
                   onSelect(t);
                   onOpenChange(false);
