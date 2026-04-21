@@ -52,45 +52,15 @@ Use real, current information from web search. Do NOT fabricate URLs.`;
         model: "google/gemini-2.5-flash",
         messages: [
           { role: "system", content: systemPrompt },
-          { role: "user", content: `Give me the top 8 trending topics from the last 7 days in ${regionLabel}.` },
-        ],
-        tools: [
           {
-            type: "function",
-            function: {
-              name: "return_trending_topics",
-              description: "Return the curated list of trending topics.",
-              parameters: {
-                type: "object",
-                properties: {
-                  topics: {
-                    type: "array",
-                    items: {
-                      type: "object",
-                      properties: {
-                        title: { type: "string" },
-                        summary: { type: "string" },
-                        angle: { type: "string" },
-                        source_url: { type: "string" },
-                        source_name: { type: "string" },
-                        category: {
-                          type: "string",
-                          enum: ["marketing", "martech", "tech", "business", "ai", "culture", "startup"],
-                        },
-                        heat: { type: "string" },
-                      },
-                      required: ["title", "summary", "angle", "source_url", "source_name", "category", "heat"],
-                      additionalProperties: false,
-                    },
-                  },
-                },
-                required: ["topics"],
-                additionalProperties: false,
-              },
-            },
+            role: "user",
+            content: `Give me the top 8 trending topics from the last 7 days in ${regionLabel}. Return ONLY raw JSON (no markdown, no code fences) in this exact shape:
+{"topics":[{"title":"","summary":"","angle":"","source_url":"","source_name":"","category":"","heat":""}]}
+
+CRITICAL: source_url must be a REAL article URL you actually saw in search results. Do NOT guess, do NOT construct URLs from patterns, do NOT invent slugs. If you can't recall an exact URL, use the publication's homepage (e.g. https://techcrunch.com) instead of fabricating a path.`,
           },
         ],
-        tool_choice: { type: "function", function: { name: "return_trending_topics" } },
+        tools: [{ type: "google_search_retrieval" }],
       }),
     });
 
