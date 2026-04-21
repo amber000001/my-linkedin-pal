@@ -51,21 +51,28 @@ Deno.serve(async (req) => {
     const regionLabel = region === "indian" ? "India" : "international (global, US/EU/UK focus)";
     const today = new Date().toISOString().slice(0, 10);
 
-    const systemPrompt = `You are a trend research assistant for a LinkedIn content creator who works in email marketing, deliverability, and martech, but wants to "ride waves" of viral conversations to grow reach.
+    const systemPrompt = `You are a trend research assistant for a LinkedIn content creator who wants to ride waves of viral AI conversations to grow reach.
 
-Today is ${today}. Find the TOP 8 most talked-about / highest-engagement topics from the LAST 7 DAYS in ${regionLabel}, mixing:
-- Marketing, martech, AdTech, email/CRM, AI-in-marketing news (around 50%)
-- General viral / trending conversations on LinkedIn and major news (business, tech, culture, startup drama, big tech moves) (around 50%)
+Today is ${today}. Find the TOP 8 most talked-about / highest-engagement AI topics from the LAST 7 DAYS in ${regionLabel}.
 
-Avoid: hard politics, religion, communal issues, tragedies, anything brand-risky.
+SCOPE: AI ONLY. This includes:
+- New AI model launches, updates, benchmarks (OpenAI, Google, Anthropic, Meta, xAI, DeepSeek, Mistral, Indian AI labs, etc.)
+- AI products, agents, tools, features
+- AI startup news, funding, acquisitions, layoffs, drama
+- AI in business / enterprise adoption
+- AI policy, regulation, lawsuits, safety
+- AI in marketing / martech / advertising / CRM (bonus relevance)
+- Viral AI demos, trends, controversies on LinkedIn / X / news
+
+Do NOT include: non-AI business news, non-AI politics, sports, entertainment unless AI is the core story, generic tech news without an AI angle.
 
 For each topic, return:
 - title: short punchy headline (max 90 chars)
 - summary: 2-3 sentences explaining what it is and WHY it's blowing up
-- angle: one sentence suggesting how a martech/marketing creator could ride this wave
+- angle: one sentence suggesting how a marketing/martech creator could ride this AI wave
 - source_url: a real article or LinkedIn post URL (must be a working link)
 - source_name: publication / outlet name
-- category: one of "marketing", "martech", "tech", "business", "ai", "culture", "startup"
+- category: one of "ai-models", "ai-products", "ai-startup", "ai-policy", "ai-marketing", "ai-research", "ai-culture"
 - heat: "🔥🔥🔥" (massive), "🔥🔥" (strong), or "🔥" (rising)
 
 Use real, current information from web search. Do NOT fabricate URLs.`;
@@ -82,7 +89,7 @@ Use real, current information from web search. Do NOT fabricate URLs.`;
           { role: "system", content: systemPrompt },
           {
             role: "user",
-            content: `Give me the top 8 trending topics from the last 7 days in ${regionLabel}. Return ONLY raw JSON (no markdown, no code fences) in this exact shape:
+            content: `Give me the top 8 trending AI topics from the last 7 days in ${regionLabel}. AI ONLY - no non-AI stories. Return ONLY raw JSON (no markdown, no code fences) in this exact shape:
 {"topics":[{"title":"","summary":"","angle":"","source_url":"","source_name":"","category":"","heat":""}]}
 
 CRITICAL: source_url must be a REAL article URL you actually saw in search results. Do NOT guess, do NOT construct URLs from patterns, do NOT invent slugs. If you can't recall an exact URL, use the publication's homepage (e.g. https://techcrunch.com) instead of fabricating a path.`,
