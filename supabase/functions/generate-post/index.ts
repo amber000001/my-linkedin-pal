@@ -298,10 +298,30 @@ serve(async (req) => {
     const isMemeMode = mode === "meme";
     const selectFields = "post_text, impressions, reactions, comments, has_meme, uses_emojis, post_type, reaction_rate, comment_rate, structure";
 
+    // Detect "ride the wave" news topics - these should NOT be framed through deliverability
+    const isNewsRideMode =
+      typeof topic === "string" && /^News - (Indian|International)\b/i.test(topic);
+
     let repositoryContext = "";
     let performanceLearning = "";
 
-    if (topic) {
+    if (isNewsRideMode) {
+      // Pull a small sample of recent posts purely for VOICE matching, no topic filter,
+      // and don't surface them as deliverability "patterns to follow".
+      const { data: recentPosts } = await supabase
+        .from("linkedin_posts")
+        .select(selectFields)
+        .order("created_at", { ascending: false })
+        .limit(5);
+
+      if (recentPosts && recentPosts.length > 0) {
+        repositoryContext = `\n\n## VOICE REFERENCE ONLY (do NOT borrow topics or deliverability framing - only mimic tone, rhythm, and sentence style):\n`;
+        recentPosts.forEach((p, i) => {
+          repositoryContext += `\n--- Voice sample ${i + 1} ---\n${p.post_text}\n`;
+        });
+      }
+      // Skip performance learning entirely - those signals are deliverability-specific
+    } else if (topic) {
       const { data: topicPosts } = await supabase
         .from("linkedin_posts")
         .select(selectFields)
@@ -332,47 +352,15 @@ serve(async (req) => {
         }
       }
     } else if (mode === "free-dump") {
-      const queryTopic = topic || null;
-      if (queryTopic) {
-        const { data: topicPosts } = await supabase
-          .from("linkedin_posts")
-          .select(selectFields)
-          .eq("topic", queryTopic)
-          .order("created_at", { ascending: false })
-          .limit(10);
+      const { data: recentPosts } = await supabase
+        .from("linkedin_posts")
+        .select(selectFields)
+        .order("created_at", { ascending: false })
+        .limit(8);
 
-        const { data: otherPosts } = await supabase
-          .from("linkedin_posts")
-          .select(selectFields)
-          .neq("topic", queryTopic)
-          .order("created_at", { ascending: false })
-          .limit(5);
-
-        if (topicPosts && topicPosts.length > 0) {
-          repositoryContext = buildPerformanceContext(topicPosts as PostWithMetrics[], false);
-        }
-        const allPosts = [...(topicPosts || []), ...(otherPosts || [])] as PostWithMetrics[];
-        performanceLearning = buildPerformanceLearningPrompt(allPosts);
-
-        if (!topicPosts || topicPosts.length === 0) {
-          if (otherPosts && otherPosts.length > 0) {
-            repositoryContext += `\n\n## AUTHOR REFERENCE POSTS (for voice matching):\n`;
-            otherPosts.slice(0, 3).forEach((p, i) => {
-              repositoryContext += `\n--- Post ${i + 1} ---\n${p.post_text}\n`;
-            });
-          }
-        }
-      } else {
-        const { data: recentPosts } = await supabase
-          .from("linkedin_posts")
-          .select(selectFields)
-          .order("created_at", { ascending: false })
-          .limit(8);
-
-        if (recentPosts && recentPosts.length > 0) {
-          repositoryContext = buildPerformanceContext(recentPosts as PostWithMetrics[], false);
-          performanceLearning = buildPerformanceLearningPrompt(recentPosts as PostWithMetrics[]);
-        }
+      if (recentPosts && recentPosts.length > 0) {
+        repositoryContext = buildPerformanceContext(recentPosts as PostWithMetrics[], false);
+        performanceLearning = buildPerformanceLearningPrompt(recentPosts as PostWithMetrics[]);
       }
     }
 
