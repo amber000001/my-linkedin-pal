@@ -86,11 +86,45 @@ CRITICAL: source_url must be a REAL article URL you actually saw in search resul
     }
 
     const data = await response.json();
-    const toolCall = data?.choices?.[0]?.message?.tool_calls?.[0];
-    const args = toolCall?.function?.arguments;
-    const parsed = typeof args === "string" ? JSON.parse(args) : args;
+    const content: string = data?.choices?.[0]?.message?.content || "";
 
-    return new Response(JSON.stringify({ topics: parsed?.topics || [] }), {
+    // Extract JSON from possibly-fenced content
+    let parsed: { topics?: any[] } = {};
+    try {
+      const fenced = content.match(/```(?:json)?\s*([\s\S]*?)```/);
+      const jsonStr = fenced ? fenced[1].trim() : content.trim();
+      // Find first { ... last }
+      const start = jsonStr.indexOf("{");
+      const end = jsonStr.lastIndexOf("}");
+      parsed = JSON.parse(start >= 0 && end > start ? jsonStr.slice(start, end + 1) : jsonStr);
+    } catch (err) {
+      console.error("Failed to parse trending topics JSON:", err, "raw:", content.slice(0, 500));
+    }
+
+    const rawTopics: any[] = Array.isArray(parsed?.topics) ? parsed.topics : [];
+
+    // Validate URLs in parallel (HEAD with GET fallback) and drop / homepage-fallback broken ones
+    const validated = await Promise.all(
+      rawTopics.map(async (t) => {
+        const url: string = t?.source_url || "";
+        if (!url || !/^https?:\/\//i.test(url)) return { ...t, source_url: "" };
+        const ok = await checkUrl(url);
+        if (ok) return t;
+        // Fall back to origin (homepage) so the user gets a working link
+        try {
+          const origin = new URL(url).origin;
+          const originOk = await checkUrl(origin);
+          return { ...t, source_url: originOk ? origin : "" };
+        } catch {
+          return { ...t, source_url: "" };
+        }
+      })
+    );
+
+    // Drop topics that ended up with no working URL at all
+    const topics = validated.filter((t) => !!t.source_url);
+
+    return new Response(JSON.stringify({ topics }), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
