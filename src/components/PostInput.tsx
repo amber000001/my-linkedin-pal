@@ -116,45 +116,71 @@ export function PostInput({ mode, onGenerate, isLoading, initialTopic, initialFr
 
   return (
     <div className="space-y-4">
-      {/* Topic dropdown - shown for all modes now */}
-      {mode !== "free-dump" ? (
-        <div>
-          <label className="text-sm font-medium text-secondary-foreground mb-1.5 block font-body">
-            {mode === "meme" ? "🎭 Topic" : "💡 Topic"}
-          </label>
-          <Select value={topic} onValueChange={handleTopicChange}>
-            <SelectTrigger className="glass border-border/40 text-foreground h-11 rounded-xl">
-              <SelectValue placeholder="Select a topic..." />
-            </SelectTrigger>
-            <SelectContent className="glass-strong border-border/30 max-h-[300px]">
-              {TOPIC_CATEGORIES.map((category) => (
-                <SelectGroup key={category.group}>
-                  <SelectLabel className="font-display text-xs text-muted-foreground">
-                    {category.group}
-                  </SelectLabel>
-                  {category.topics.map((t) => (
-                    <SelectItem key={t} value={t} className="text-sm">
-                      {t}
-                    </SelectItem>
-                  ))}
-                </SelectGroup>
-              ))}
-              <SelectGroup>
-                <SelectLabel className="font-display text-xs text-muted-foreground">Other</SelectLabel>
-                <SelectItem value="__custom" className="text-sm">Custom topic...</SelectItem>
+      {/* Topic dropdown - shown for all modes */}
+      <div>
+        <label className="text-sm font-medium text-secondary-foreground mb-1.5 block font-body">
+          {mode === "meme" ? "🎭 Topic" : mode === "free-dump" ? <>💡 Topic <span className="text-muted-foreground">(optional – helps categorize)</span></> : "💡 Topic"}
+        </label>
+        <Select value={topic} onValueChange={handleTopicChange}>
+          <SelectTrigger className="glass border-border/40 text-foreground h-11 rounded-xl">
+            <SelectValue placeholder="Select a topic..." />
+          </SelectTrigger>
+          <SelectContent className="glass-strong border-border/30 max-h-[300px]">
+            {TOPIC_CATEGORIES.map((category) => (
+              <SelectGroup key={category.group}>
+                <SelectLabel className="font-display text-xs text-muted-foreground">
+                  {category.group}
+                </SelectLabel>
+                {category.topics.map((t) => (
+                  <SelectItem key={t} value={t} className="text-sm">
+                    {t}
+                  </SelectItem>
+                ))}
               </SelectGroup>
-            </SelectContent>
-          </Select>
-          {topic === "__custom" && (
-            <Input
-              placeholder="Type your custom topic..."
-              value={customTopic}
-              onChange={(e) => setCustomTopic(e.target.value)}
-              className="glass border-border/40 text-foreground placeholder:text-muted-foreground/50 h-11 rounded-xl mt-2"
-            />
-          )}
-        </div>
-      )}
+            ))}
+            <SelectGroup>
+              <SelectLabel className="font-display text-xs text-muted-foreground">Other</SelectLabel>
+              <SelectItem value="__custom" className="text-sm">Custom topic...</SelectItem>
+            </SelectGroup>
+          </SelectContent>
+        </Select>
+        {topic === "__custom" && (
+          <Input
+            placeholder="Type your custom topic..."
+            value={customTopic}
+            onChange={(e) => setCustomTopic(e.target.value)}
+            className="glass border-border/40 text-foreground placeholder:text-muted-foreground/50 h-11 rounded-xl mt-2"
+          />
+        )}
+        {isNewsTopic(topic) && (
+          <div className="mt-2 flex items-center justify-between gap-2 glass rounded-xl px-3 py-2 border border-primary/30">
+            <div className="text-xs font-body min-w-0">
+              {selectedTrendTitle ? (
+                <span className="text-foreground">🔥 <span className="font-medium">{selectedTrendTitle}</span></span>
+              ) : (
+                <span className="text-muted-foreground">No trending topic selected yet</span>
+              )}
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                const r = regionFromNewsTopic(topic);
+                if (r) { setTrendingRegion(r); setTrendingOpen(true); }
+              }}
+              className="text-xs text-primary hover:underline shrink-0"
+            >
+              {selectedTrendTitle ? "Change" : "Browse trends"}
+            </button>
+          </div>
+        )}
+      </div>
+
+      <TrendingTopicsDialog
+        open={trendingOpen}
+        onOpenChange={setTrendingOpen}
+        region={trendingRegion}
+        onSelect={handleTrendingSelect}
+      />
 
       {mode === "free-dump" && (
         <>
