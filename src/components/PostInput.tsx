@@ -13,7 +13,8 @@ import {
 } from "@/components/ui/select";
 import { Loader2, Wand2 } from "lucide-react";
 import type { PostMode, GenerateRequest } from "@/lib/api";
-import { TOPIC_CATEGORIES } from "@/lib/topics";
+import { TOPIC_CATEGORIES, isNewsTopic, regionFromNewsTopic } from "@/lib/topics";
+import { TrendingTopicsDialog, type TrendingTopic } from "@/components/TrendingTopicsDialog";
 
 const TONE_TAGS = [
   { value: "funny", label: "😂 Funny" },
@@ -45,6 +46,30 @@ export function PostInput({ mode, onGenerate, isLoading, initialTopic, initialFr
   const [url, setUrl] = useState(initialUrl || "");
   const [memeTemplate, setMemeTemplate] = useState(initialMemeTemplate || "");
   const [toneTags, setToneTags] = useState<string[]>([]);
+  const [trendingOpen, setTrendingOpen] = useState(false);
+  const [trendingRegion, setTrendingRegion] = useState<"indian" | "international">("indian");
+  const [selectedTrendTitle, setSelectedTrendTitle] = useState<string>("");
+
+  const handleTopicChange = (val: string) => {
+    setTopic(val);
+    if (isNewsTopic(val)) {
+      const region = regionFromNewsTopic(val);
+      if (region) {
+        setTrendingRegion(region);
+        setTrendingOpen(true);
+      }
+    }
+  };
+
+  const handleTrendingSelect = (t: TrendingTopic) => {
+    setUrl(t.source_url);
+    setSelectedTrendTitle(t.title);
+    if (mode === "free-dump") {
+      setFreeText(
+        `Trending topic to ride: ${t.title}\n\nWhat it is: ${t.summary}\n\nMy angle: ${t.angle}\n\nSource: ${t.source_name} (${t.source_url})`
+      );
+    }
+  };
 
   useEffect(() => {
     if (initialTopic) {
