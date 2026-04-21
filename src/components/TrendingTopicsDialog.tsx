@@ -55,7 +55,7 @@ export function TrendingTopicsDialog({ open, onOpenChange, region, onSelect }: P
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="glass-strong max-w-3xl max-h-[85vh] overflow-y-auto border-border/40 rounded-2xl">
+      <DialogContent className="glass-static max-w-3xl max-h-[85vh] overflow-y-auto border-border/40 rounded-2xl">
         <DialogHeader>
           <DialogTitle className="font-display text-2xl text-gradient flex items-center gap-2">
             <Sparkles className="h-5 w-5" />
