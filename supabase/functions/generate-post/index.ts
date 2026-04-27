@@ -92,6 +92,47 @@ audit, inbox placement, reputation monitoring, customer journey, segmentation lo
 ## QUALITY STANDARD
 If the output reads like a generic AI post, it must be rewritten. Every post must sound human, match the author's tone, follow the structural flow, and respect all language rules.
 
+## ENGAGEMENT PLAYBOOK (apply to every post — this drives reactions, comments, reshares)
+
+The single biggest lever on LinkedIn is the **first 2 lines** (the "see more" preview). If those don't earn the click, nothing else matters.
+
+### 1. Hook patterns that consistently outperform
+Choose ONE pattern per post — never stack them. Rotate across generations.
+- **Contrarian claim**: state the opposite of accepted wisdom. ("Open rates are deceptive." / "A bigger list usually means worse reach.")
+- **Specific number / outcome**: a concrete metric or result with no setup. ("Audited 11 ESPs last month. 9 were silently blocked at Gmail.")
+- **Pattern interrupt question**: a short question the reader can't answer without reading on. ("Why do your engaged users start marking you as spam?")
+- **Confession / cost**: admit a mistake or cost. ("I lost a 200k-subscriber list to one warm-up shortcut.")
+- **Observation from the field**: "Noticed something this week while auditing X..." — only when the story is genuinely specific.
+- **Myth callout**: "Stop measuring deliverability with open rates."
+
+### 2. Hook anti-patterns (NEVER ship)
+- Vague openers: "In today's fast-moving world…", "Let's talk about…", "I've been thinking about…"
+- Greetings or throat-clearing: "Hey everyone", "Quick thought"
+- Long context before the point. The point IS the hook.
+- Question hooks that the reader will mentally answer "no" to and scroll on. ("Do you struggle with X?")
+
+### 3. Structure for engagement
+- Line 1 = hook. Line 2 = either the stakes or the twist. Both visible above "see more".
+- Use white space aggressively — every distinct beat on its own line.
+- Mid-post: one "scroll-anchor" line that is short, declarative, and quotable. (People screenshot these.)
+- Closing: a comment-bait line — an honest question, a "tell me I'm wrong", a "what's worked for you?", or a position the reader will want to react to. Never a generic "thoughts?".
+
+### 4. Comment magnets
+- Take a clear position. Hedged posts get likes; opinionated posts get comments.
+- End with a real question tied to the reader's experience, not a rhetorical one.
+- Leave one small "missing piece" the reader can add in comments (a tactic, a tool, an example).
+
+### 5. Reshare triggers
+- A reusable framing or rule the reader can quote ("Reachability ≠ list size.")
+- A clean numbered or bulleted list of 3-5 items they can save.
+- A named pattern or coined phrase the reader can adopt.
+
+### 6. Alternate hooks — THIS MATTERS
+When asked for alternateHooks, return hooks that use **different patterns** from the main post's hook (e.g. if main is contrarian, give one number-led and one confession-led). Each hook must be standalone and < 140 characters. They are A/B test candidates, not paraphrases.
+
+### 7. Authenticity guardrail
+Engagement tactics never override voice. If a tactic would make the post sound like a growth-hacker template, drop the tactic. The author's credibility is the long-term engagement engine.
+
 ## OUTPUT FORMAT
 Return a valid JSON object. Do NOT wrap in markdown code blocks. Just raw JSON.`;
 
@@ -112,12 +153,13 @@ const MODE_PROMPTS: Record<string, string> = {
   "hashtags": ["3-5 relevant hashtags with #"],
   "cta": "optional call to action"
 }`,
-  "free-dump": `Take the user's raw, messy notes and convert them into a polished LinkedIn post. Return JSON with:
+  "free-dump": `Take the user's raw, messy notes and convert them into a polished LinkedIn post. Apply the ENGAGEMENT PLAYBOOK rigorously — the first 2 lines must earn the "see more" click. Return JSON with:
 {
   "mainPost": "The polished LinkedIn post (written in the user's voice)",
-  "alternateDraft": "A tighter, more concise alternate version",
+  "alternateHooks": ["3 alternate opening hooks, each using a DIFFERENT hook pattern (contrarian / number-led / confession / question / observation / myth-callout) than the main post. Each < 140 chars, standalone."],
+  "alternateDraft": "A tighter, more concise alternate version of the full post",
   "hashtags": ["3-5 relevant hashtags with #"],
-  "cta": "optional call to action"
+  "cta": "A comment-bait closing line — an honest question or a position that invites disagreement. Never generic 'thoughts?'."
 }`,
 };
 
