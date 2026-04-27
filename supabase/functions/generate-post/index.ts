@@ -141,17 +141,17 @@ const MODE_PROMPTS: Record<string, string> = {
 {
   "mainPost": "A short, punchy 4-5 line LinkedIn caption to accompany the meme (written in the user's voice, keep it tight)",
   "memeIdeas": ["3 meme text ideas based on the topic"],
-  "alternateHooks": ["2 alternate opening hooks"],
+  "alternateHooks": ["3 alternate opening hooks, each using a DIFFERENT hook pattern (contrarian / number-led / confession / question / observation / myth-callout). Each < 140 chars, standalone."],
   "hashtags": ["3-5 relevant hashtags with #"],
   "commentReplies": ["2 suggested comment replies"],
   "cta": "optional call to action"
 }`,
-  "thought-leadership": `Generate a thought leadership LinkedIn post. Return JSON with:
+  "thought-leadership": `Generate a thought leadership LinkedIn post. Apply the ENGAGEMENT PLAYBOOK rigorously — the first 2 lines must earn the "see more" click, and the closing must invite a real comment. Return JSON with:
 {
   "mainPost": "The full LinkedIn post (written in the user's voice, 150-300 words)",
-  "alternateHooks": ["2 alternate opening hooks"],
+  "alternateHooks": ["3 alternate opening hooks, each using a DIFFERENT hook pattern (contrarian / number-led / confession / question / observation / myth-callout) than the main post. Each < 140 chars, standalone."],
   "hashtags": ["3-5 relevant hashtags with #"],
-  "cta": "optional call to action"
+  "cta": "A comment-bait closing line — an honest question or a position that invites disagreement. Never generic 'thoughts?'."
 }`,
   "free-dump": `Take the user's raw, messy notes and convert them into a polished LinkedIn post. Apply the ENGAGEMENT PLAYBOOK rigorously — the first 2 lines must earn the "see more" click. Return JSON with:
 {
