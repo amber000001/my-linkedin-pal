@@ -320,6 +320,75 @@ Based on the author's historical performance data:
   return prompt;
 }
 
+// Analyze length and structure of top vs bottom performing posts to learn
+// whether short/long and bullet-heavy/narrative formats win for THIS author + mode.
+function buildLengthStructurePrompt(posts: PostWithMetrics[]): string {
+  const withMetrics = posts.filter((p) => p.impressions > 0 && p.post_text);
+  if (withMetrics.length < 3) return "";
+
+  const analyze = (p: PostWithMetrics) => {
+    const text = p.post_text || "";
+    const words = text.trim().split(/\s+/).filter(Boolean).length;
+    const lines = text.split(/\n/).filter((l) => l.trim().length > 0);
+    const bulletLines = lines.filter((l) => /^\s*([-*•·▪►▶▸◆●▫◦]|\d+[.)])\s+/.test(l)).length;
+    const bulletRatio = lines.length ? bulletLines / lines.length : 0;
+    const score =
+      (p.reaction_rate || 0) * 0.4 +
+      (p.comment_rate || 0) * 0.4 +
+      ((p.impressions || 0) / 100000) * 0.2;
+    return { words, lines: lines.length, bulletLines, bulletRatio, score, p };
+  };
+
+  const analyzed = withMetrics.map(analyze);
+  const sorted = [...analyzed].sort((a, b) => b.score - a.score);
+  const topN = Math.max(3, Math.ceil(sorted.length * 0.33));
+  const top = sorted.slice(0, topN);
+  const bottom = sorted.slice(-topN);
+
+  const avg = (arr: number[]) => (arr.length ? arr.reduce((s, n) => s + n, 0) / arr.length : 0);
+  const topAvgWords = Math.round(avg(top.map((x) => x.words)));
+  const botAvgWords = Math.round(avg(bottom.map((x) => x.words)));
+  const topAvgLines = Math.round(avg(top.map((x) => x.lines)));
+  const topAvgBulletRatio = avg(top.map((x) => x.bulletRatio));
+  const botAvgBulletRatio = avg(bottom.map((x) => x.bulletRatio));
+  const topBulletPosts = top.filter((x) => x.bulletRatio >= 0.25).length;
+
+  // Length recommendation
+  const lengthBucket = (w: number) =>
+    w < 90 ? "short (<90 words)" : w < 180 ? "medium (90-180 words)" : "long (180+ words)";
+  const targetLow = Math.max(60, Math.round(topAvgWords * 0.85));
+  const targetHigh = Math.round(topAvgWords * 1.15);
+
+  let lengthVerdict: string;
+  if (topAvgWords < botAvgWords * 0.85) {
+    lengthVerdict = `SHORTER posts win for this author. Top posts average ${topAvgWords} words vs ${botAvgWords} for bottom. Aim for ${targetLow}-${targetHigh} words.`;
+  } else if (topAvgWords > botAvgWords * 1.15) {
+    lengthVerdict = `LONGER posts win for this author. Top posts average ${topAvgWords} words vs ${botAvgWords} for bottom. Aim for ${targetLow}-${targetHigh} words.`;
+  } else {
+    lengthVerdict = `Length is not a strong signal (top avg ${topAvgWords}w, bottom avg ${botAvgWords}w). Default to ${lengthBucket(topAvgWords)} and let the idea decide.`;
+  }
+
+  // Structure recommendation
+  let structureVerdict: string;
+  if (topAvgBulletRatio >= 0.25 && topAvgBulletRatio > botAvgBulletRatio * 1.3) {
+    structureVerdict = `BULLET-HEAVY structure wins. ${topBulletPosts}/${top.length} top posts use bullets (avg ${(topAvgBulletRatio * 100).toFixed(0)}% bulleted lines vs ${(botAvgBulletRatio * 100).toFixed(0)}% in bottom). Use a clean 3-5 item list as the spine of the post.`;
+  } else if (topAvgBulletRatio < 0.1 && botAvgBulletRatio > topAvgBulletRatio * 1.5) {
+    structureVerdict = `NARRATIVE structure wins. Top posts are prose-driven (only ${(topAvgBulletRatio * 100).toFixed(0)}% bulleted lines vs ${(botAvgBulletRatio * 100).toFixed(0)}% in bottom). Avoid bullets unless the content truly demands a list.`;
+  } else {
+    structureVerdict = `Mixed structure works (top ${(topAvgBulletRatio * 100).toFixed(0)}% bulleted lines). Use bullets only when listing 3+ discrete items; otherwise stay narrative.`;
+  }
+
+  return `\n\n## LENGTH & STRUCTURE LEARNING (mode-specific, from this author's data)
+- Sample: ${withMetrics.length} posts analyzed (top ${topN} vs bottom ${topN} by composite engagement score).
+- Top posts: avg ${topAvgWords} words, ${topAvgLines} non-empty lines, ${(topAvgBulletRatio * 100).toFixed(0)}% bulleted lines.
+- Bottom posts: avg ${botAvgWords} words, ${(botAvgBulletRatio * 100).toFixed(0)}% bulleted lines.
+
+LENGTH VERDICT: ${lengthVerdict}
+STRUCTURE VERDICT: ${structureVerdict}
+
+Apply these as defaults — override only if the specific topic clearly demands otherwise.`;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -346,6 +415,8 @@ serve(async (req) => {
 
     let repositoryContext = "";
     let performanceLearning = "";
+
+    let lengthStructure = "";
 
     if (isNewsRideMode) {
       // Pull a small sample of recent posts purely for VOICE matching, no topic filter,
@@ -385,6 +456,12 @@ serve(async (req) => {
       const allPosts = [...(topicPosts || []), ...(otherPosts || [])] as PostWithMetrics[];
       performanceLearning = buildPerformanceLearningPrompt(allPosts);
 
+      // Length/structure learning - mode-specific (filter by has_meme matching current mode)
+      const modeMatched = allPosts.filter((p) => p.has_meme === isMemeMode);
+      lengthStructure = buildLengthStructurePrompt(
+        modeMatched.length >= 3 ? modeMatched : allPosts
+      );
+
       if (!topicPosts || topicPosts.length === 0) {
         if (otherPosts && otherPosts.length > 0) {
           repositoryContext += `\n\n## AUTHOR REFERENCE POSTS (for voice matching):\n`;
@@ -394,15 +471,22 @@ serve(async (req) => {
         }
       }
     } else if (mode === "free-dump") {
+      // Pull a wider sample so length/structure analysis has signal
       const { data: recentPosts } = await supabase
         .from("linkedin_posts")
         .select(selectFields)
         .order("created_at", { ascending: false })
-        .limit(8);
+        .limit(30);
 
       if (recentPosts && recentPosts.length > 0) {
         repositoryContext = buildPerformanceContext(recentPosts as PostWithMetrics[], false);
         performanceLearning = buildPerformanceLearningPrompt(recentPosts as PostWithMetrics[]);
+        const modeMatched = (recentPosts as PostWithMetrics[]).filter(
+          (p) => p.has_meme === isMemeMode
+        );
+        lengthStructure = buildLengthStructurePrompt(
+          modeMatched.length >= 3 ? modeMatched : (recentPosts as PostWithMetrics[])
+        );
       }
     }
 
@@ -458,7 +542,7 @@ The voice is the author. The subject is the trend.`
         body: JSON.stringify({
           model: "google/gemini-3-flash-preview",
           messages: [
-            { role: "system", content: STYLE_SYSTEM_PROMPT + repositoryContext + performanceLearning + newsRideOverride + "\n\n" + modePrompt },
+            { role: "system", content: STYLE_SYSTEM_PROMPT + repositoryContext + performanceLearning + lengthStructure + newsRideOverride + "\n\n" + modePrompt },
             { role: "user", content: userMessage },
           ],
         }),
