@@ -416,6 +416,8 @@ serve(async (req) => {
     let repositoryContext = "";
     let performanceLearning = "";
 
+    let lengthStructure = "";
+
     if (isNewsRideMode) {
       // Pull a small sample of recent posts purely for VOICE matching, no topic filter,
       // and don't surface them as deliverability "patterns to follow".
@@ -454,6 +456,12 @@ serve(async (req) => {
       const allPosts = [...(topicPosts || []), ...(otherPosts || [])] as PostWithMetrics[];
       performanceLearning = buildPerformanceLearningPrompt(allPosts);
 
+      // Length/structure learning - mode-specific (filter by has_meme matching current mode)
+      const modeMatched = allPosts.filter((p) => p.has_meme === isMemeMode);
+      lengthStructure = buildLengthStructurePrompt(
+        modeMatched.length >= 3 ? modeMatched : allPosts
+      );
+
       if (!topicPosts || topicPosts.length === 0) {
         if (otherPosts && otherPosts.length > 0) {
           repositoryContext += `\n\n## AUTHOR REFERENCE POSTS (for voice matching):\n`;
@@ -463,15 +471,22 @@ serve(async (req) => {
         }
       }
     } else if (mode === "free-dump") {
+      // Pull a wider sample so length/structure analysis has signal
       const { data: recentPosts } = await supabase
         .from("linkedin_posts")
         .select(selectFields)
         .order("created_at", { ascending: false })
-        .limit(8);
+        .limit(30);
 
       if (recentPosts && recentPosts.length > 0) {
         repositoryContext = buildPerformanceContext(recentPosts as PostWithMetrics[], false);
         performanceLearning = buildPerformanceLearningPrompt(recentPosts as PostWithMetrics[]);
+        const modeMatched = (recentPosts as PostWithMetrics[]).filter(
+          (p) => p.has_meme === isMemeMode
+        );
+        lengthStructure = buildLengthStructurePrompt(
+          modeMatched.length >= 3 ? modeMatched : (recentPosts as PostWithMetrics[])
+        );
       }
     }
 
