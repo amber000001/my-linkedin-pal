@@ -542,7 +542,7 @@ The voice is the author. The subject is the trend.`
         body: JSON.stringify({
           model: "google/gemini-3-flash-preview",
           messages: [
-            { role: "system", content: STYLE_SYSTEM_PROMPT + repositoryContext + performanceLearning + newsRideOverride + "\n\n" + modePrompt },
+            { role: "system", content: STYLE_SYSTEM_PROMPT + repositoryContext + performanceLearning + lengthStructure + newsRideOverride + "\n\n" + modePrompt },
             { role: "user", content: userMessage },
           ],
         }),
