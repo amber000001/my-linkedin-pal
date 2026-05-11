@@ -421,7 +421,7 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     const isMemeMode = mode === "meme";
-    const selectFields = "post_text, impressions, reactions, comments, has_meme, uses_emojis, post_type, reaction_rate, comment_rate, structure";
+    const selectFields = "id, post_text, impressions, reactions, comments, has_meme, uses_emojis, post_type, reaction_rate, comment_rate, structure";
 
     // Detect "ride the wave" news topics - these should NOT be framed through deliverability
     const isNewsRideMode =
