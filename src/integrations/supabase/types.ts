@@ -14,6 +14,175 @@ export type Database = {
   }
   public: {
     Tables: {
+      generated_post_outcomes: {
+        Row: {
+          beat_baseline_comments: boolean | null
+          beat_baseline_reactions: boolean | null
+          comment_rate: number | null
+          comments: number
+          generated_post_id: string
+          hours_since_posting: number
+          id: string
+          impressions: number
+          lift_vs_baseline: number | null
+          measured_at: string
+          reaction_rate: number | null
+          reactions: number
+          reshares: number
+        }
+        Insert: {
+          beat_baseline_comments?: boolean | null
+          beat_baseline_reactions?: boolean | null
+          comment_rate?: number | null
+          comments?: number
+          generated_post_id: string
+          hours_since_posting: number
+          id?: string
+          impressions?: number
+          lift_vs_baseline?: number | null
+          measured_at?: string
+          reaction_rate?: number | null
+          reactions?: number
+          reshares?: number
+        }
+        Update: {
+          beat_baseline_comments?: boolean | null
+          beat_baseline_reactions?: boolean | null
+          comment_rate?: number | null
+          comments?: number
+          generated_post_id?: string
+          hours_since_posting?: number
+          id?: string
+          impressions?: number
+          lift_vs_baseline?: number | null
+          measured_at?: string
+          reaction_rate?: number | null
+          reactions?: number
+          reshares?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "generated_post_outcomes_generated_post_id_fkey"
+            columns: ["generated_post_id"]
+            isOneToOne: false
+            referencedRelation: "generated_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      generated_posts: {
+        Row: {
+          alternate_hooks: Json
+          baseline_comment_rate: number | null
+          baseline_reaction_rate: number | null
+          created_at: string
+          edit_distance: number | null
+          edit_reason: string | null
+          emoji_count: number
+          emojis_used: string[]
+          final_post: string
+          free_text: string | null
+          has_list: boolean
+          has_meme: boolean
+          has_question_closer: boolean
+          hook_pattern: string | null
+          hook_rationale: string | null
+          hook_text: string | null
+          id: string
+          influenced_by_post_ids: string[]
+          linkedin_post_id: string | null
+          mode: string
+          paragraph_count: number
+          posted_at: string | null
+          predicted_engagement_driver: string | null
+          predicted_score: number | null
+          scroll_anchor_line: string | null
+          source_url: string | null
+          specificity_nudge_used: boolean
+          status: string
+          topic: string | null
+          user_satisfaction: string | null
+          uses_emojis: boolean
+          word_count: number
+        }
+        Insert: {
+          alternate_hooks?: Json
+          baseline_comment_rate?: number | null
+          baseline_reaction_rate?: number | null
+          created_at?: string
+          edit_distance?: number | null
+          edit_reason?: string | null
+          emoji_count?: number
+          emojis_used?: string[]
+          final_post: string
+          free_text?: string | null
+          has_list?: boolean
+          has_meme?: boolean
+          has_question_closer?: boolean
+          hook_pattern?: string | null
+          hook_rationale?: string | null
+          hook_text?: string | null
+          id?: string
+          influenced_by_post_ids?: string[]
+          linkedin_post_id?: string | null
+          mode: string
+          paragraph_count?: number
+          posted_at?: string | null
+          predicted_engagement_driver?: string | null
+          predicted_score?: number | null
+          scroll_anchor_line?: string | null
+          source_url?: string | null
+          specificity_nudge_used?: boolean
+          status?: string
+          topic?: string | null
+          user_satisfaction?: string | null
+          uses_emojis?: boolean
+          word_count?: number
+        }
+        Update: {
+          alternate_hooks?: Json
+          baseline_comment_rate?: number | null
+          baseline_reaction_rate?: number | null
+          created_at?: string
+          edit_distance?: number | null
+          edit_reason?: string | null
+          emoji_count?: number
+          emojis_used?: string[]
+          final_post?: string
+          free_text?: string | null
+          has_list?: boolean
+          has_meme?: boolean
+          has_question_closer?: boolean
+          hook_pattern?: string | null
+          hook_rationale?: string | null
+          hook_text?: string | null
+          id?: string
+          influenced_by_post_ids?: string[]
+          linkedin_post_id?: string | null
+          mode?: string
+          paragraph_count?: number
+          posted_at?: string | null
+          predicted_engagement_driver?: string | null
+          predicted_score?: number | null
+          scroll_anchor_line?: string | null
+          source_url?: string | null
+          specificity_nudge_used?: boolean
+          status?: string
+          topic?: string | null
+          user_satisfaction?: string | null
+          uses_emojis?: boolean
+          word_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "generated_posts_linkedin_post_id_fkey"
+            columns: ["linkedin_post_id"]
+            isOneToOne: false
+            referencedRelation: "linkedin_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       linkedin_posts: {
         Row: {
           comment_rate: number | null
