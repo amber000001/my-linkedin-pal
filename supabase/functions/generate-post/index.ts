@@ -625,18 +625,107 @@ The voice is the author. The subject is the trend.`
       return result;
     };
 
-    // Apply sanitization to all string fields in parsed output
-    for (const key of Object.keys(parsed)) {
-      if (typeof parsed[key] === "string") {
-        parsed[key] = sanitizeText(parsed[key]);
-      } else if (Array.isArray(parsed[key])) {
-        parsed[key] = parsed[key].map((item: unknown) =>
-          typeof item === "string" ? sanitizeText(item) : item
-        );
+    // Apply sanitization to all string fields in parsed output (incl. nested {pattern,text} objects)
+    const sanitizeAny = (v: unknown): unknown => {
+      if (typeof v === "string") return sanitizeText(v);
+      if (Array.isArray(v)) return v.map(sanitizeAny);
+      if (v && typeof v === "object") {
+        const out: Record<string, unknown> = {};
+        for (const [k, val] of Object.entries(v as Record<string, unknown>)) out[k] = sanitizeAny(val);
+        return out;
       }
+      return v;
+    };
+    for (const key of Object.keys(parsed)) parsed[key] = sanitizeAny(parsed[key]);
+
+    // --- Capture tagged generation in DB (Phase 1 closed-loop foundation) ---
+    const mainPost: string = parsed.mainPost || "";
+    const altHooksRaw = Array.isArray(parsed.alternateHooks) ? parsed.alternateHooks : [];
+    // Structured form: [{pattern, text}]; also produce flat string[] for legacy clients
+    const alternateHooksStructured = altHooksRaw.map((h: unknown) => {
+      if (typeof h === "string") return { pattern: null, text: h };
+      if (h && typeof h === "object") {
+        const o = h as Record<string, unknown>;
+        return { pattern: typeof o.pattern === "string" ? o.pattern : null, text: typeof o.text === "string" ? o.text : "" };
+      }
+      return { pattern: null, text: "" };
+    }).filter((h: { text: string }) => h.text);
+    const alternateHooksFlat: string[] = alternateHooksStructured.map((h: { text: string }) => h.text);
+    parsed.alternateHooks = alternateHooksFlat; // backwards-compat for current UI
+
+    const validHook = (typeof parsed.hook_pattern === "string" && (HOOK_PATTERNS as readonly string[]).includes(parsed.hook_pattern))
+      ? parsed.hook_pattern : null;
+    if (typeof parsed.hook_pattern === "string" && !validHook) {
+      console.warn("Unknown hook_pattern from model:", parsed.hook_pattern);
+    }
+    const hookText = mainPost.split("\n").filter((l) => l.trim()).slice(0, 2).join("\n");
+
+    // Structural metrics
+    const emojiRegexAll = /[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{FE00}-\u{FE0F}\u{1FA00}-\u{1FA6F}\u{1FA70}-\u{1FAF8}]/gu;
+    const emojisFound = mainPost.match(emojiRegexAll) || [];
+    const wordCount = mainPost.trim().split(/\s+/).filter(Boolean).length;
+    const lines = mainPost.split(/\n/);
+    const paragraphCount = mainPost.split(/\n{2,}/).filter((s) => s.trim()).length;
+    const hasList = lines.some((l) => /^\s*([-*•·▪►▶▸◆●▫◦]|\d+[.)])\s+/.test(l));
+    const lastLine = [...lines].reverse().find((l) => l.trim()) || "";
+    const hasQuestionCloser = /\?\s*$/.test(lastLine.trim());
+
+    // Baselines + influenced post ids from the repo context already pulled
+    const metricsPosts = allRepoPosts.filter((p) => (p.impressions ?? 0) > 0);
+    const baselineReact = metricsPosts.length
+      ? metricsPosts.reduce((s, p) => s + (p.reaction_rate || 0), 0) / metricsPosts.length : null;
+    const baselineComment = metricsPosts.length
+      ? metricsPosts.reduce((s, p) => s + (p.comment_rate || 0), 0) / metricsPosts.length : null;
+    const maxImp = Math.max(...allRepoPosts.map((p) => p.impressions || 1), 1);
+    const scored = allRepoPosts
+      .filter((p) => p.has_meme === isMemeMode)
+      .map((p) => ({
+        id: p.id,
+        score: (p.reaction_rate || 0) * 0.4 + (p.comment_rate || 0) * 0.4 + ((p.impressions || 0) / maxImp) * 20 * 0.2,
+      }))
+      .sort((a, b) => b.score - a.score);
+    const influencedIds = scored.slice(0, 3).map((s) => s.id).filter(Boolean);
+    const predictedScore = (baselineReact || 0) * 0.4 + (baselineComment || 0) * 0.4 + 0.2 * 10; // snapshot heuristic
+
+    let generatedPostId: string | null = null;
+    try {
+      const { data: insRow, error: insErr } = await supabase
+        .from("generated_posts")
+        .insert({
+          mode,
+          topic: topic || null,
+          free_text: freeText || null,
+          source_url: url || null,
+          final_post: mainPost,
+          hook_pattern: validHook,
+          hook_text: hookText,
+          hook_rationale: typeof parsed.hook_rationale === "string" ? parsed.hook_rationale : null,
+          alternate_hooks: alternateHooksStructured,
+          predicted_engagement_driver: typeof parsed.predicted_engagement_driver === "string" ? parsed.predicted_engagement_driver : null,
+          scroll_anchor_line: typeof parsed.scroll_anchor_line === "string" ? parsed.scroll_anchor_line : null,
+          has_meme: isMemeMode,
+          uses_emojis: emojisFound.length > 0,
+          emoji_count: emojisFound.length,
+          emojis_used: Array.from(new Set(emojisFound)),
+          word_count: wordCount,
+          paragraph_count: paragraphCount,
+          has_list: hasList,
+          has_question_closer: hasQuestionCloser,
+          predicted_score: predictedScore,
+          baseline_reaction_rate: baselineReact,
+          baseline_comment_rate: baselineComment,
+          influenced_by_post_ids: influencedIds,
+          status: "draft",
+        })
+        .select("id")
+        .single();
+      if (insErr) console.error("generated_posts insert error:", insErr);
+      else generatedPostId = insRow?.id ?? null;
+    } catch (logErr) {
+      console.error("generated_posts insert threw:", logErr);
     }
 
-    return new Response(JSON.stringify(parsed), {
+    return new Response(JSON.stringify({ ...parsed, generatedPostId }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
