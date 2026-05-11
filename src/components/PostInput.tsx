@@ -103,7 +103,7 @@ export function PostInput({ mode, onGenerate, isLoading, initialTopic, initialFr
       freeText: mode === "free-dump" ? freeText : undefined,
       url: url || undefined,
       memeTemplate: mode === "meme" ? memeTemplate || undefined : undefined,
-      toneTags: mode === "free-dump" && toneTags.length > 0 ? toneTags : undefined,
+      toneTags: toneTags.length > 0 ? toneTags : undefined,
     });
   };
 
