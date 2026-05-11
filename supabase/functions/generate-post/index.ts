@@ -431,6 +431,7 @@ serve(async (req) => {
     let performanceLearning = "";
 
     let lengthStructure = "";
+    let allRepoPosts: (PostWithMetrics & { id?: string })[] = [];
 
     if (isNewsRideMode) {
       // Pull a small sample of recent posts purely for VOICE matching, no topic filter,
@@ -446,6 +447,7 @@ serve(async (req) => {
         recentPosts.forEach((p, i) => {
           repositoryContext += `\n--- Voice sample ${i + 1} ---\n${p.post_text}\n`;
         });
+        allRepoPosts = recentPosts as (PostWithMetrics & { id?: string })[];
       }
       // Skip performance learning entirely - those signals are deliverability-specific
     } else if (topic) {
@@ -467,7 +469,8 @@ serve(async (req) => {
         repositoryContext = buildPerformanceContext(topicPosts as PostWithMetrics[], isMemeMode);
       }
 
-      const allPosts = [...(topicPosts || []), ...(otherPosts || [])] as PostWithMetrics[];
+      const allPosts = [...(topicPosts || []), ...(otherPosts || [])] as (PostWithMetrics & { id?: string })[];
+      allRepoPosts = allPosts;
       performanceLearning = buildPerformanceLearningPrompt(allPosts);
 
       // Length/structure learning - mode-specific (filter by has_meme matching current mode)
@@ -501,6 +504,7 @@ serve(async (req) => {
         lengthStructure = buildLengthStructurePrompt(
           modeMatched.length >= 3 ? modeMatched : (recentPosts as PostWithMetrics[])
         );
+        allRepoPosts = recentPosts as (PostWithMetrics & { id?: string })[];
       }
     }
 
