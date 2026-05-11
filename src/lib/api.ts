@@ -19,6 +19,12 @@ export interface GenerateResponse {
   hashtags?: string[];
   cta?: string;
   commentReplies?: string[];
+  // Phase 1 closed-loop fields (optional, captured server-side too)
+  generatedPostId?: string;
+  hook_pattern?: string;
+  hook_rationale?: string;
+  predicted_engagement_driver?: string;
+  scroll_anchor_line?: string;
 }
 
 export async function generatePost(request: GenerateRequest): Promise<GenerateResponse> {
