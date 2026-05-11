@@ -183,42 +183,40 @@ export function PostInput({ mode, onGenerate, isLoading, initialTopic, initialFr
       />
 
       {mode === "free-dump" && (
-        <>
-          <div>
-            <label className="text-sm font-medium text-secondary-foreground mb-1.5 block font-body">
-              📝 Dump your raw thoughts
-            </label>
-            <Textarea
-              placeholder="Paste rough notes, broken sentences, half-written drafts, copied examples..."
-              value={freeText}
-              onChange={(e) => setFreeText(e.target.value)}
-              className="glass border-border/40 text-foreground placeholder:text-muted-foreground/50 min-h-[180px] resize-y rounded-xl"
-            />
-          </div>
-
-          <div>
-            <label className="text-sm font-medium text-secondary-foreground mb-1.5 block font-body">
-              🎨 Tone <span className="text-muted-foreground">(pick as many as you like)</span>
-            </label>
-            <div className="flex flex-wrap gap-2">
-              {TONE_TAGS.map((tag) => (
-                <button
-                  key={tag.value}
-                  type="button"
-                  onClick={() => toggleToneTag(tag.value)}
-                  className={`px-3 py-1.5 rounded-xl text-sm font-body transition-all duration-200 border ${
-                    toneTags.includes(tag.value)
-                      ? "bg-primary/20 border-primary/50 text-foreground glow-magic"
-                      : "glass border-border/40 text-muted-foreground hover:text-foreground hover:border-border/60"
-                  }`}
-                >
-                  {tag.label}
-                </button>
-              ))}
-            </div>
-          </div>
-        </>
+        <div>
+          <label className="text-sm font-medium text-secondary-foreground mb-1.5 block font-body">
+            📝 Dump your raw thoughts
+          </label>
+          <Textarea
+            placeholder="Paste rough notes, broken sentences, half-written drafts, copied examples..."
+            value={freeText}
+            onChange={(e) => setFreeText(e.target.value)}
+            className="glass border-border/40 text-foreground placeholder:text-muted-foreground/50 min-h-[180px] resize-y rounded-xl"
+          />
+        </div>
       )}
+
+      <div>
+        <label className="text-sm font-medium text-secondary-foreground mb-1.5 block font-body">
+          {mode === "meme" ? "🎭 Tone" : mode === "thought-leadership" ? "💡 Tone" : "🎨 Tone"} <span className="text-muted-foreground">(pick as many as you like)</span>
+        </label>
+        <div className="flex flex-wrap gap-2">
+          {TONE_TAGS.map((tag) => (
+            <button
+              key={tag.value}
+              type="button"
+              onClick={() => toggleToneTag(tag.value)}
+              className={`px-3 py-1.5 rounded-xl text-sm font-body transition-all duration-200 border ${
+                toneTags.includes(tag.value)
+                  ? "bg-primary/20 border-primary/50 text-foreground glow-magic"
+                  : "glass border-border/40 text-muted-foreground hover:text-foreground hover:border-border/60"
+              }`}
+            >
+              {tag.label}
+            </button>
+          ))}
+        </div>
+      </div>
 
       {mode === "meme" && (
         <div>
