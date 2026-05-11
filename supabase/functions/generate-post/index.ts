@@ -136,27 +136,41 @@ Engagement tactics never override voice. If a tactic would make the post sound l
 ## OUTPUT FORMAT
 Return a valid JSON object. Do NOT wrap in markdown code blocks. Just raw JSON.`;
 
+// Hook pattern values that are valid for tagging.
+const HOOK_PATTERNS = ["contrarian", "specific_number", "question", "confession", "observation", "myth_callout"] as const;
+
+const TAGGED_OUTPUT_SCHEMA = `
+  "hook_pattern": "ONE of: contrarian | specific_number | question | confession | observation | myth_callout (the pattern your mainPost hook uses)",
+  "hook_rationale": "One short sentence explaining why this pattern fits this topic.",
+  "alternateHooks": [
+    { "pattern": "<one of the six patterns, DIFFERENT from hook_pattern>", "text": "< 140 char standalone hook" },
+    { "pattern": "<different pattern again>", "text": "< 140 char standalone hook" },
+    { "pattern": "<different pattern again>", "text": "< 140 char standalone hook" }
+  ],
+  "predicted_engagement_driver": "ONE of: reactions | comments | reshares (which lever this post is built to pull)",
+  "scroll_anchor_line": "The single most quotable / screenshot-worthy line from the mainPost (verbatim)."`;
+
 const MODE_PROMPTS: Record<string, string> = {
   meme: `Generate a meme-led LinkedIn post. The mainPost MUST be short and punchy — 4 to 5 lines maximum. No long explanations. Think snappy caption energy: set up the joke or insight in 2-3 lines, land it in 1-2 lines. Return JSON with:
 {
   "mainPost": "A short, punchy 4-5 line LinkedIn caption to accompany the meme (written in the user's voice, keep it tight)",
-  "memeIdeas": ["3 meme text ideas based on the topic"],
-  "alternateHooks": ["3 alternate opening hooks, each using a DIFFERENT hook pattern (contrarian / number-led / confession / question / observation / myth-callout). Each < 140 chars, standalone."],
+  "memeIdeas": ["3 meme text ideas based on the topic"],${TAGGED_OUTPUT_SCHEMA}
+  ,
   "hashtags": ["3-5 relevant hashtags with #"],
   "commentReplies": ["2 suggested comment replies"],
   "cta": "optional call to action"
 }`,
   "thought-leadership": `Generate a thought leadership LinkedIn post. Apply the ENGAGEMENT PLAYBOOK rigorously — the first 2 lines must earn the "see more" click, and the closing must invite a real comment. Return JSON with:
 {
-  "mainPost": "The full LinkedIn post (written in the user's voice, 150-300 words)",
-  "alternateHooks": ["3 alternate opening hooks, each using a DIFFERENT hook pattern (contrarian / number-led / confession / question / observation / myth-callout) than the main post. Each < 140 chars, standalone."],
+  "mainPost": "The full LinkedIn post (written in the user's voice, 150-300 words)",${TAGGED_OUTPUT_SCHEMA}
+  ,
   "hashtags": ["3-5 relevant hashtags with #"],
   "cta": "A comment-bait closing line — an honest question or a position that invites disagreement. Never generic 'thoughts?'."
 }`,
   "free-dump": `Take the user's raw, messy notes and convert them into a polished LinkedIn post. Apply the ENGAGEMENT PLAYBOOK rigorously — the first 2 lines must earn the "see more" click. Return JSON with:
 {
-  "mainPost": "The polished LinkedIn post (written in the user's voice)",
-  "alternateHooks": ["3 alternate opening hooks, each using a DIFFERENT hook pattern (contrarian / number-led / confession / question / observation / myth-callout) than the main post. Each < 140 chars, standalone."],
+  "mainPost": "The polished LinkedIn post (written in the user's voice)",${TAGGED_OUTPUT_SCHEMA}
+  ,
   "alternateDraft": "A tighter, more concise alternate version of the full post",
   "hashtags": ["3-5 relevant hashtags with #"],
   "cta": "A comment-bait closing line — an honest question or a position that invites disagreement. Never generic 'thoughts?'."
