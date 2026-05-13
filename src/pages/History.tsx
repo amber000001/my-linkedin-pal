@@ -16,6 +16,7 @@ import { SparkleParticles } from "@/components/SparkleParticles";
 import { Sparkles, Search, ArrowLeft, Star, Copy, Trash2, RotateCcw, Upload, Eye, Check } from "lucide-react";
 import { toast } from "sonner";
 import { HistoryDetailDialog } from "@/components/HistoryDetailDialog";
+import { UploadToIntelligenceDialog } from "@/components/UploadToIntelligenceDialog";
 import type { PostGeneration } from "@/lib/history";
 
 const MODE_LABELS: Record<string, string> = {
@@ -42,6 +43,8 @@ export default function History() {
   const [filterFavorite, setFilterFavorite] = useState(false);
   const [selectedItem, setSelectedItem] = useState<PostGeneration | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [uploadItem, setUploadItem] = useState<PostGeneration | null>(null);
+  const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
 
   const fetchGenerations = async () => {
     setLoading(true);
@@ -137,17 +140,13 @@ export default function History() {
     setTimeout(() => setCopiedId(null), 2000);
   };
 
-  const uploadToIntelligence = async (item: PostGeneration) => {
-    const topic = item.topic_dropdown_value || item.topic || "General";
-    const { error } = await supabase.from("linkedin_posts").insert({
-      topic,
-      post_text: item.generated_post,
-    });
-    if (error) {
-      toast.error("Failed to upload to intelligence layer");
-    } else {
-      toast.success("Uploaded to intelligence layer ✨");
-    }
+  const openUploadDialog = (item: PostGeneration) => {
+    setUploadItem(item);
+    setUploadDialogOpen(true);
+  };
+
+  const handleUploadSuccess = () => {
+    // Optionally refresh or show confirmation
   };
 
   const reuseItem = (item: PostGeneration) => {
@@ -311,7 +310,7 @@ export default function History() {
                     <Star className={`h-3.5 w-3.5 mr-1 ${item.is_favorite ? "fill-accent text-accent" : ""}`} />
                     {item.is_favorite ? "Unfavorite" : "Favorite"}
                   </Button>
-                  <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={() => uploadToIntelligence(item)}>
+                  <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={() => openUploadDialog(item)}>
                     <Upload className="h-3.5 w-3.5 mr-1" /> Upload to Intelligence
                   </Button>
                   {item.status !== "posted" && (
@@ -336,11 +335,18 @@ export default function History() {
           onOpenChange={(open) => !open && setSelectedItem(null)}
           onCopy={() => copyPost(selectedItem)}
           onReuse={() => reuseItem(selectedItem)}
-          onUploadToIntelligence={() => uploadToIntelligence(selectedItem)}
+          onUploadToIntelligence={() => openUploadDialog(selectedItem)}
           onToggleFavorite={() => toggleFavorite(selectedItem)}
           onUpdateStatus={(status) => updateStatus(selectedItem, status)}
         />
       )}
+
+      <UploadToIntelligenceDialog
+        item={uploadItem}
+        open={uploadDialogOpen}
+        onOpenChange={setUploadDialogOpen}
+        onSuccess={handleUploadSuccess}
+      />
     </div>
   );
 }
