@@ -57,12 +57,13 @@ export function UploadToIntelligenceDialog({
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Reset form when dialog opens with a new item
-  useState(() => {
+  useEffect(() => {
     if (item && open) {
       setPostType(MODE_TO_POST_TYPE[item.post_type] || "thought_leadership");
       setHasMeme(item.post_type === "meme");
+      setUsesEmojis(true);
     }
-  });
+  }, [item, open]);
 
   const resetForm = () => {
     setDatePosted("");
