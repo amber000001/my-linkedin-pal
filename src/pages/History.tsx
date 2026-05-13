@@ -43,6 +43,8 @@ export default function History() {
   const [filterFavorite, setFilterFavorite] = useState(false);
   const [selectedItem, setSelectedItem] = useState<PostGeneration | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [uploadItem, setUploadItem] = useState<PostGeneration | null>(null);
+  const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
 
   const fetchGenerations = async () => {
     setLoading(true);
