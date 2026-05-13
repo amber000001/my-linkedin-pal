@@ -16,6 +16,7 @@ import { SparkleParticles } from "@/components/SparkleParticles";
 import { Sparkles, Search, ArrowLeft, Star, Copy, Trash2, RotateCcw, Upload, Eye, Check } from "lucide-react";
 import { toast } from "sonner";
 import { HistoryDetailDialog } from "@/components/HistoryDetailDialog";
+import { UploadToIntelligenceDialog } from "@/components/UploadToIntelligenceDialog";
 import type { PostGeneration } from "@/lib/history";
 
 const MODE_LABELS: Record<string, string> = {
