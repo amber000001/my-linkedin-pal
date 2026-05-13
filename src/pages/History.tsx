@@ -140,17 +140,13 @@ export default function History() {
     setTimeout(() => setCopiedId(null), 2000);
   };
 
-  const uploadToIntelligence = async (item: PostGeneration) => {
-    const topic = item.topic_dropdown_value || item.topic || "General";
-    const { error } = await supabase.from("linkedin_posts").insert({
-      topic,
-      post_text: item.generated_post,
-    });
-    if (error) {
-      toast.error("Failed to upload to intelligence layer");
-    } else {
-      toast.success("Uploaded to intelligence layer ✨");
-    }
+  const openUploadDialog = (item: PostGeneration) => {
+    setUploadItem(item);
+    setUploadDialogOpen(true);
+  };
+
+  const handleUploadSuccess = () => {
+    // Optionally refresh or show confirmation
   };
 
   const reuseItem = (item: PostGeneration) => {
