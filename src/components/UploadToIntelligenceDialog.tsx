@@ -12,13 +12,16 @@ import {
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Upload, Loader2, BarChart3, Calendar, FileText, Image, Smile } from "lucide-react";
+import { Upload, Loader2, BarChart3, Calendar, FileText, Image, Smile, FolderOpen } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { TOPIC_CATEGORIES } from "@/lib/topics";
 import type { PostGeneration } from "@/lib/history";
 
 const POST_TYPES = [
@@ -49,6 +52,7 @@ export function UploadToIntelligenceDialog({
 }: UploadToIntelligenceDialogProps) {
   const [datePosted, setDatePosted] = useState("");
   const [postType, setPostType] = useState("thought_leadership");
+  const [topic, setTopic] = useState("");
   const [impressions, setImpressions] = useState("");
   const [reactions, setReactions] = useState("");
   const [commentsInput, setCommentsInput] = useState("");
@@ -59,6 +63,7 @@ export function UploadToIntelligenceDialog({
   // Reset form when dialog opens with a new item
   useEffect(() => {
     if (item && open) {
+      setTopic(item.topic_dropdown_value || item.topic || "");
       setPostType(MODE_TO_POST_TYPE[item.post_type] || "thought_leadership");
       setHasMeme(item.post_type === "meme");
       setUsesEmojis(true);
@@ -68,6 +73,7 @@ export function UploadToIntelligenceDialog({
   const resetForm = () => {
     setDatePosted("");
     setPostType("thought_leadership");
+    setTopic("");
     setImpressions("");
     setReactions("");
     setCommentsInput("");
@@ -78,7 +84,7 @@ export function UploadToIntelligenceDialog({
   const handleSubmit = async () => {
     if (!item) return;
 
-    const topic = item.topic_dropdown_value || item.topic || "General";
+    const finalTopic = topic.trim() || item.topic_dropdown_value || item.topic || "General";
     const imp = parseInt(impressions) || 0;
     const react = parseInt(reactions) || 0;
     const comm = parseInt(commentsInput) || 0;
@@ -86,7 +92,7 @@ export function UploadToIntelligenceDialog({
     setIsSubmitting(true);
     try {
       const { error } = await supabase.from("linkedin_posts").insert({
-        topic,
+        topic: finalTopic,
         post_type: postType,
         post_text: item.generated_post,
         date_posted: datePosted || null,
@@ -113,8 +119,6 @@ export function UploadToIntelligenceDialog({
 
   if (!item) return null;
 
-  const topicLabel = item.topic_dropdown_value || item.topic || "General";
-
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) resetForm(); onOpenChange(v); }}>
       <DialogContent className="glass-static sm:max-w-lg border-border/30 max-h-[90vh] overflow-y-auto">
@@ -132,8 +136,35 @@ export function UploadToIntelligenceDialog({
               {item.generated_post}
             </p>
             <p className="text-xs text-muted-foreground mt-1">
-              Topic: <span className="text-foreground/80">{topicLabel}</span>
+              Topic: <span className="text-foreground/80">{topic || item.topic_dropdown_value || item.topic || "General"}</span>
             </p>
+          </div>
+
+          {/* Topic */}
+          <div>
+            <label className="text-sm font-medium text-secondary-foreground mb-1.5 block font-body">
+              <FolderOpen className="h-3.5 w-3.5 inline mr-1" />
+              Topic
+            </label>
+            <Select value={topic} onValueChange={setTopic}>
+              <SelectTrigger className="glass border-border/40 text-foreground h-11 rounded-xl">
+                <SelectValue placeholder="Select a topic..." />
+              </SelectTrigger>
+              <SelectContent className="glass-strong border-border/30 max-h-[300px]">
+                {TOPIC_CATEGORIES.map((category) => (
+                  <SelectGroup key={category.group}>
+                    <SelectLabel className="font-display text-xs text-muted-foreground">
+                      {category.group}
+                    </SelectLabel>
+                    {category.topics.map((t) => (
+                      <SelectItem key={t} value={t} className="text-sm">
+                        {t}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Post Type */}
