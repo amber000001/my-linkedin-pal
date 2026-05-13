@@ -119,8 +119,6 @@ export function UploadToIntelligenceDialog({
 
   if (!item) return null;
 
-  const topicLabel = item.topic_dropdown_value || item.topic || "General";
-
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) resetForm(); onOpenChange(v); }}>
       <DialogContent className="glass-static sm:max-w-lg border-border/30 max-h-[90vh] overflow-y-auto">
