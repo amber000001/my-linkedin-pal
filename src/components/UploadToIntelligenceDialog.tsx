@@ -52,6 +52,7 @@ export function UploadToIntelligenceDialog({
 }: UploadToIntelligenceDialogProps) {
   const [datePosted, setDatePosted] = useState("");
   const [postType, setPostType] = useState("thought_leadership");
+  const [topic, setTopic] = useState("");
   const [impressions, setImpressions] = useState("");
   const [reactions, setReactions] = useState("");
   const [commentsInput, setCommentsInput] = useState("");
