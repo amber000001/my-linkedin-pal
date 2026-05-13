@@ -73,6 +73,7 @@ export function UploadToIntelligenceDialog({
   const resetForm = () => {
     setDatePosted("");
     setPostType("thought_leadership");
+    setTopic("");
     setImpressions("");
     setReactions("");
     setCommentsInput("");
@@ -83,7 +84,7 @@ export function UploadToIntelligenceDialog({
   const handleSubmit = async () => {
     if (!item) return;
 
-    const topic = item.topic_dropdown_value || item.topic || "General";
+    const finalTopic = topic.trim() || item.topic_dropdown_value || item.topic || "General";
     const imp = parseInt(impressions) || 0;
     const react = parseInt(reactions) || 0;
     const comm = parseInt(commentsInput) || 0;
