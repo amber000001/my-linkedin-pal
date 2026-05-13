@@ -138,8 +138,35 @@ export function UploadToIntelligenceDialog({
               {item.generated_post}
             </p>
             <p className="text-xs text-muted-foreground mt-1">
-              Topic: <span className="text-foreground/80">{topicLabel}</span>
+              Topic: <span className="text-foreground/80">{topic || item.topic_dropdown_value || item.topic || "General"}</span>
             </p>
+          </div>
+
+          {/* Topic */}
+          <div>
+            <label className="text-sm font-medium text-secondary-foreground mb-1.5 block font-body">
+              <FolderOpen className="h-3.5 w-3.5 inline mr-1" />
+              Topic
+            </label>
+            <Select value={topic} onValueChange={setTopic}>
+              <SelectTrigger className="glass border-border/40 text-foreground h-11 rounded-xl">
+                <SelectValue placeholder="Select a topic..." />
+              </SelectTrigger>
+              <SelectContent className="glass-strong border-border/30 max-h-[300px]">
+                {TOPIC_CATEGORIES.map((category) => (
+                  <SelectGroup key={category.group}>
+                    <SelectLabel className="font-display text-xs text-muted-foreground">
+                      {category.group}
+                    </SelectLabel>
+                    {category.topics.map((t) => (
+                      <SelectItem key={t} value={t} className="text-sm">
+                        {t}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Post Type */}
