@@ -92,7 +92,7 @@ export function UploadToIntelligenceDialog({
     setIsSubmitting(true);
     try {
       const { error } = await supabase.from("linkedin_posts").insert({
-        topic,
+        topic: finalTopic,
         post_type: postType,
         post_text: item.generated_post,
         date_posted: datePosted || null,
