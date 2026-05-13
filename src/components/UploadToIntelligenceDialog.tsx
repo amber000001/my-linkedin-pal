@@ -63,6 +63,7 @@ export function UploadToIntelligenceDialog({
   // Reset form when dialog opens with a new item
   useEffect(() => {
     if (item && open) {
+      setTopic(item.topic_dropdown_value || item.topic || "");
       setPostType(MODE_TO_POST_TYPE[item.post_type] || "thought_leadership");
       setHasMeme(item.post_type === "meme");
       setUsesEmojis(true);
