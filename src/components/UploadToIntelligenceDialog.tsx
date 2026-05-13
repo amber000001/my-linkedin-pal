@@ -12,13 +12,16 @@ import {
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Upload, Loader2, BarChart3, Calendar, FileText, Image, Smile } from "lucide-react";
+import { Upload, Loader2, BarChart3, Calendar, FileText, Image, Smile, FolderOpen } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { TOPIC_CATEGORIES } from "@/lib/topics";
 import type { PostGeneration } from "@/lib/history";
 
 const POST_TYPES = [
