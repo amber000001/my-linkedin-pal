@@ -168,6 +168,15 @@ const Index = () => {
               variant="outline"
               size="sm"
               className="glass border-border/40 rounded-xl hover:glow-magic"
+              onClick={() => navigate("/ella")}
+            >
+              <Sparkles className="h-4 w-4 mr-2" />
+              Ella
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="glass border-border/40 rounded-xl hover:glow-magic"
               onClick={() => navigate("/repository")}
             >
               <BookOpen className="h-4 w-4 mr-2" />
