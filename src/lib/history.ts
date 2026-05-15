@@ -17,4 +17,5 @@ export interface PostGeneration {
   meme_ideas: string[];
   status: string;
   is_favorite: boolean;
+  generated_post_id?: string | null;
 }

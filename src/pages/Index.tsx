@@ -92,7 +92,8 @@ const Index = () => {
         meme_ideas: (result.memeIdeas || []) as any,
         status: "draft",
         is_favorite: false,
-      });
+        generated_post_id: result.generatedPostId || null,
+      } as any);
     } catch (e) {
       console.error("Failed to save generation:", e);
     }
