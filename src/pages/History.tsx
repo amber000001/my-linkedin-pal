@@ -197,6 +197,7 @@ export default function History() {
       </header>
 
       <main className="relative mx-auto max-w-7xl px-6 py-8 space-y-6">
+        <CatchUpMetrics refreshKey={catchUpKey} />
         {/* Filters */}
         <div className="glass-static rounded-2xl p-4 space-y-4">
           <div className="flex flex-wrap gap-3">
