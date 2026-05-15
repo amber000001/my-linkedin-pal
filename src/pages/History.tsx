@@ -101,6 +101,12 @@ export default function History() {
   };
 
   const updateStatus = async (item: PostGeneration, status: string) => {
+    // "posted" goes through the Mark-as-Posted modal; everything else updates inline.
+    if (status === "posted") {
+      setMarkPostedItem(item);
+      setMarkPostedOpen(true);
+      return;
+    }
     const { error } = await supabase
       .from("post_generations")
       .update({ status })
@@ -112,17 +118,16 @@ export default function History() {
         prev.map((g) => (g.id === item.id ? { ...g, status } : g))
       );
       toast.success(`Marked as ${status}`);
-
-      // When marking as posted, navigate to Repository with post content pre-filled
-      if (status === "posted") {
-        const params = new URLSearchParams();
-        params.set("prefill_post", item.generated_post);
-        if (item.topic_dropdown_value) {
-          params.set("prefill_topic", item.topic_dropdown_value);
-        }
-        navigate(`/repository?${params.toString()}`);
-      }
     }
+  };
+
+  const handleMarkPostedSuccess = () => {
+    if (markPostedItem) {
+      setGenerations((prev) =>
+        prev.map((g) => (g.id === markPostedItem.id ? { ...g, status: "posted" } : g))
+      );
+    }
+    setCatchUpKey((k) => k + 1);
   };
 
   const deleteItem = async (item: PostGeneration) => {
