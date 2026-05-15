@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, BarChart3, Sparkles, Users } from "lucide-react";
-import SparkleParticles from "@/components/SparkleParticles";
+import { SparkleParticles } from "@/components/SparkleParticles";
 import PerformanceHeatmap from "@/components/ella/PerformanceHeatmap";
 import TopicROIMatrix from "@/components/ella/TopicROIMatrix";
 import AskElla from "@/components/ella/AskElla";
