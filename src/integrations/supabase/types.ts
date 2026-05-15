@@ -242,6 +242,7 @@ export type Database = {
           created_at: string
           cta_options: string | null
           generated_post: string
+          generated_post_id: string | null
           hashtags: Json | null
           id: string
           input_text: string | null
@@ -262,6 +263,7 @@ export type Database = {
           created_at?: string
           cta_options?: string | null
           generated_post: string
+          generated_post_id?: string | null
           hashtags?: Json | null
           id?: string
           input_text?: string | null
@@ -282,6 +284,7 @@ export type Database = {
           created_at?: string
           cta_options?: string | null
           generated_post?: string
+          generated_post_id?: string | null
           hashtags?: Json | null
           id?: string
           input_text?: string | null
