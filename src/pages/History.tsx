@@ -17,6 +17,8 @@ import { Sparkles, Search, ArrowLeft, Star, Copy, Trash2, RotateCcw, Upload, Eye
 import { toast } from "sonner";
 import { HistoryDetailDialog } from "@/components/HistoryDetailDialog";
 import { UploadToIntelligenceDialog } from "@/components/UploadToIntelligenceDialog";
+import { MarkPostedDialog } from "@/components/MarkPostedDialog";
+import { CatchUpMetrics } from "@/components/CatchUpMetrics";
 import type { PostGeneration } from "@/lib/history";
 
 const MODE_LABELS: Record<string, string> = {
@@ -45,6 +47,9 @@ export default function History() {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [uploadItem, setUploadItem] = useState<PostGeneration | null>(null);
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
+  const [markPostedItem, setMarkPostedItem] = useState<PostGeneration | null>(null);
+  const [markPostedOpen, setMarkPostedOpen] = useState(false);
+  const [catchUpKey, setCatchUpKey] = useState(0);
 
   const fetchGenerations = async () => {
     setLoading(true);
