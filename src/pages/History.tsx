@@ -357,6 +357,13 @@ export default function History() {
         onOpenChange={setUploadDialogOpen}
         onSuccess={handleUploadSuccess}
       />
+
+      <MarkPostedDialog
+        item={markPostedItem}
+        open={markPostedOpen}
+        onOpenChange={setMarkPostedOpen}
+        onSuccess={handleMarkPostedSuccess}
+      />
     </div>
   );
 }
