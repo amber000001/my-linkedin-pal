@@ -14,6 +14,80 @@ export type Database = {
   }
   public: {
     Tables: {
+      audience_signals: {
+        Row: {
+          created_at: string
+          engagement_count: number
+          engagement_types: Json
+          engager_name: string
+          id: string
+          linkedin_post_id: string | null
+          measured_at: string
+          segment: string
+        }
+        Insert: {
+          created_at?: string
+          engagement_count?: number
+          engagement_types?: Json
+          engager_name: string
+          id?: string
+          linkedin_post_id?: string | null
+          measured_at?: string
+          segment?: string
+        }
+        Update: {
+          created_at?: string
+          engagement_count?: number
+          engagement_types?: Json
+          engager_name?: string
+          id?: string
+          linkedin_post_id?: string | null
+          measured_at?: string
+          segment?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audience_signals_linkedin_post_id_fkey"
+            columns: ["linkedin_post_id"]
+            isOneToOne: false
+            referencedRelation: "linkedin_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ella_state: {
+        Row: {
+          current_user_goals: Json
+          id: string
+          last_briefing_sent_at: string | null
+          last_nudge_sent_at: string | null
+          learned_thresholds: Json
+          silenced_until: string | null
+          tone_preference: string
+          updated_at: string
+        }
+        Insert: {
+          current_user_goals?: Json
+          id?: string
+          last_briefing_sent_at?: string | null
+          last_nudge_sent_at?: string | null
+          learned_thresholds?: Json
+          silenced_until?: string | null
+          tone_preference?: string
+          updated_at?: string
+        }
+        Update: {
+          current_user_goals?: Json
+          id?: string
+          last_briefing_sent_at?: string | null
+          last_nudge_sent_at?: string | null
+          learned_thresholds?: Json
+          silenced_until?: string | null
+          tone_preference?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       generated_post_outcomes: {
         Row: {
           beat_baseline_comments: boolean | null
@@ -234,6 +308,60 @@ export type Database = {
         }
         Relationships: []
       }
+      nudges: {
+        Row: {
+          acted_on_at: string | null
+          composite_score: number | null
+          confidence_score: number | null
+          created_at: string
+          dismissal_reason: string | null
+          dismissed_at: string | null
+          id: string
+          novelty_score: number | null
+          nudge_type: string
+          opportunity_score: number | null
+          payload: Json
+          threshold_at_send: number | null
+          was_acted_on: boolean
+          was_opened: boolean
+          was_sent: boolean
+        }
+        Insert: {
+          acted_on_at?: string | null
+          composite_score?: number | null
+          confidence_score?: number | null
+          created_at?: string
+          dismissal_reason?: string | null
+          dismissed_at?: string | null
+          id?: string
+          novelty_score?: number | null
+          nudge_type: string
+          opportunity_score?: number | null
+          payload?: Json
+          threshold_at_send?: number | null
+          was_acted_on?: boolean
+          was_opened?: boolean
+          was_sent?: boolean
+        }
+        Update: {
+          acted_on_at?: string | null
+          composite_score?: number | null
+          confidence_score?: number | null
+          created_at?: string
+          dismissal_reason?: string | null
+          dismissed_at?: string | null
+          id?: string
+          novelty_score?: number | null
+          nudge_type?: string
+          opportunity_score?: number | null
+          payload?: Json
+          threshold_at_send?: number | null
+          was_acted_on?: boolean
+          was_opened?: boolean
+          was_sent?: boolean
+        }
+        Relationships: []
+      }
       post_generations: {
         Row: {
           alternate_draft: string | null
@@ -300,9 +428,51 @@ export type Database = {
         }
         Relationships: []
       }
+      trending_topics: {
+        Row: {
+          created_at: string
+          expires_at: string | null
+          growth_rate: number
+          id: string
+          relevance_to_user: number
+          source: string
+          topic: string
+          volume_score: number
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string | null
+          growth_rate?: number
+          id?: string
+          relevance_to_user?: number
+          source?: string
+          topic: string
+          volume_score?: number
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string | null
+          growth_rate?: number
+          id?: string
+          relevance_to_user?: number
+          source?: string
+          topic?: string
+          volume_score?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
-      [_ in never]: never
+      cadence_log: {
+        Row: {
+          date: string | null
+          days_since_last_post: number | null
+          posts_count: number | null
+          rolling_30d_avg: number | null
+          rolling_7d_avg: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       [_ in never]: never
