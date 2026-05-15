@@ -1,0 +1,1 @@
+ALTER VIEW public.cadence_log SET (security_invoker = true);
