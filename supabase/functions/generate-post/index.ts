@@ -490,7 +490,6 @@ serve(async (req) => {
           repositoryContext += `\n${i + 1}. ${firstLines}\n`;
         });
       }
-    }
     } else if (mode === "free-dump") {
       // Pull a wider sample so length/structure analysis has signal
       const { data: recentPosts } = await supabase
