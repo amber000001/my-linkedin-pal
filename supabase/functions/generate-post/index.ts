@@ -451,41 +451,44 @@ serve(async (req) => {
       }
       // Skip performance learning entirely - those signals are deliverability-specific
     } else if (topic) {
-      const { data: topicPosts } = await supabase
+      // Pull a broad sample of recent posts for VOICE/STYLE reference only.
+      // Do NOT bias the model toward past subject matter — the topic comes from the user request.
+      const { data: recentPosts } = await supabase
         .from("linkedin_posts")
         .select(selectFields)
-        .eq("topic", topic)
         .order("created_at", { ascending: false })
-        .limit(10);
+        .limit(15);
 
-      const { data: otherPosts } = await supabase
-        .from("linkedin_posts")
-        .select(selectFields)
-        .neq("topic", topic)
-        .order("created_at", { ascending: false })
-        .limit(5);
+      const allPosts = (recentPosts || []) as (PostWithMetrics & { id?: string })[];
+      allRepoPosts = allPosts;
 
-      if (topicPosts && topicPosts.length > 0) {
-        repositoryContext = buildPerformanceContext(topicPosts as PostWithMetrics[], isMemeMode);
+      if (allPosts.length > 0) {
+        repositoryContext = `\n\n## VOICE & STYLE REFERENCE (mimic tone, rhythm, sentence cadence, formatting, hook style ONLY — do NOT reuse their subject matter, examples, statistics, anecdotes, or topic. The TOPIC for this new post is strictly what the user requested below):\n`;
+        allPosts.slice(0, 6).forEach((p, i) => {
+          repositoryContext += `\n--- Voice sample ${i + 1} ---\n${p.post_text}\n`;
+        });
+
+        performanceLearning = buildPerformanceLearningPrompt(allPosts);
+        const modeMatched = allPosts.filter((p) => p.has_meme === isMemeMode);
+        lengthStructure = buildLengthStructurePrompt(
+          modeMatched.length >= 3 ? modeMatched : allPosts
+        );
       }
 
-      const allPosts = [...(topicPosts || []), ...(otherPosts || [])] as (PostWithMetrics & { id?: string })[];
-      allRepoPosts = allPosts;
-      performanceLearning = buildPerformanceLearningPrompt(allPosts);
+      // Pull recent generated posts on the SAME topic to enforce idea novelty
+      const { data: recentGen } = await supabase
+        .from("generated_posts")
+        .select("final_post")
+        .eq("topic", topic)
+        .order("created_at", { ascending: false })
+        .limit(8);
 
-      // Length/structure learning - mode-specific (filter by has_meme matching current mode)
-      const modeMatched = allPosts.filter((p) => p.has_meme === isMemeMode);
-      lengthStructure = buildLengthStructurePrompt(
-        modeMatched.length >= 3 ? modeMatched : allPosts
-      );
-
-      if (!topicPosts || topicPosts.length === 0) {
-        if (otherPosts && otherPosts.length > 0) {
-          repositoryContext += `\n\n## AUTHOR REFERENCE POSTS (for voice matching):\n`;
-          otherPosts.slice(0, 3).forEach((p, i) => {
-            repositoryContext += `\n--- Post ${i + 1} ---\n${p.post_text}\n`;
-          });
-        }
+      if (recentGen && recentGen.length > 0) {
+        repositoryContext += `\n\n## RECENTLY GENERATED IDEAS ON THIS TOPIC — DO NOT REPEAT. Produce a genuinely new angle, hook, and example. Avoid the same anecdotes, frames, or opening lines:\n`;
+        recentGen.forEach((g: { final_post: string }, i: number) => {
+          const firstLines = (g.final_post || "").split("\n").filter((l: string) => l.trim()).slice(0, 4).join(" / ");
+          repositoryContext += `\n${i + 1}. ${firstLines}\n`;
+        });
       }
     } else if (mode === "free-dump") {
       // Pull a wider sample so length/structure analysis has signal
@@ -519,7 +522,7 @@ serve(async (req) => {
       userMessage = `Create a meme-led LinkedIn post about: ${topic}`;
       if (memeTemplate) userMessage += `\nMeme template/reference: ${memeTemplate}`;
     } else {
-      userMessage = `Write a thought leadership LinkedIn post about: ${topic}`;
+      userMessage = `Write a thought leadership LinkedIn post about: ${topic}\n\nThe post MUST be about "${topic}" specifically. Past posts in the system prompt are STYLE references only — do not drift into their subject matter (e.g. databases, list size, reactivation) unless the topic itself is that. Generate a fresh, original idea on "${topic}" with a new angle the author hasn't already covered.`;
     }
 
     if (url) {
