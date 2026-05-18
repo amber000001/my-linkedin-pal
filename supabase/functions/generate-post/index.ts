@@ -523,7 +523,7 @@ serve(async (req) => {
       userMessage = `Create a meme-led LinkedIn post about: ${topic}`;
       if (memeTemplate) userMessage += `\nMeme template/reference: ${memeTemplate}`;
     } else {
-      userMessage = `Write a thought leadership LinkedIn post about: ${topic}`;
+      userMessage = `Write a thought leadership LinkedIn post about: ${topic}\n\nThe post MUST be about "${topic}" specifically. Past posts in the system prompt are STYLE references only — do not drift into their subject matter (e.g. databases, list size, reactivation) unless the topic itself is that. Generate a fresh, original idea on "${topic}" with a new angle the author hasn't already covered.`;
     }
 
     if (url) {
