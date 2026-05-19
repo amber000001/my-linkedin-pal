@@ -9,6 +9,7 @@ import { UploadPostDialog } from "@/components/UploadPostDialog";
 import { generatePost, type PostMode, type GenerateRequest, type GenerateResponse } from "@/lib/api";
 import { Sparkles, Clock, BookOpen } from "lucide-react";
 import { SparkleParticles } from "@/components/SparkleParticles";
+import AmbientSuggestion from "@/components/ella/AmbientSuggestion";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -196,6 +197,7 @@ const Index = () => {
       </header>
 
       <main className="relative mx-auto max-w-7xl px-6 py-8 space-y-8">
+        <AmbientSuggestion />
         {/* Generate Post - Centered */}
         <div className="max-w-2xl mx-auto">
           <Tabs value={mode} onValueChange={(v) => { setMode(v as PostMode); setOutput(null); }}>
