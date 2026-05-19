@@ -5,6 +5,8 @@ import { ArrowLeft, BarChart3, Sparkles, Users } from "lucide-react";
 import { SparkleParticles } from "@/components/SparkleParticles";
 import PerformanceHeatmap from "@/components/ella/PerformanceHeatmap";
 import TopicROIMatrix from "@/components/ella/TopicROIMatrix";
+import HookPatternLeaderboard from "@/components/ella/HookPatternLeaderboard";
+import ContentGapRadar from "@/components/ella/ContentGapRadar";
 import AskElla from "@/components/ella/AskElla";
 import AudienceOnboarding from "@/components/ella/AudienceOnboarding";
 
