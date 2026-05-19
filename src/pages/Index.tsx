@@ -27,11 +27,16 @@ const Index = () => {
   const [reuseUrl, setReuseUrl] = useState<string | undefined>();
   const [reuseMemeTemplate, setReuseMemeTemplate] = useState<string | undefined>();
 
+  const handledReuseRef = useRef<string | null>(null);
+
   // Handle reuse from history
   useEffect(() => {
     const reuseId = searchParams.get("reuse");
     if (!reuseId) return;
+    if (handledReuseRef.current === reuseId) return;
+    handledReuseRef.current = reuseId;
 
+    let cancelled = false;
     const loadReuse = async () => {
       const { data, error } = await supabase
         .from("post_generations")
@@ -39,6 +44,7 @@ const Index = () => {
         .eq("id", reuseId)
         .single();
 
+      if (cancelled) return;
       if (error || !data) {
         toast.error("Could not load draft");
         return;
@@ -65,11 +71,20 @@ const Index = () => {
         url: item.input_url || undefined,
         memeTemplate: item.meme_template || undefined,
       });
-      setSearchParams({}, { replace: true });
+      // Clear the param on the next tick so this effect doesn't race with the URL update
+      setTimeout(() => {
+        setSearchParams((prev) => {
+          const next = new URLSearchParams(prev);
+          next.delete("reuse");
+          return next;
+        }, { replace: true });
+      }, 0);
       toast.success("Draft loaded for editing ✨");
     };
     loadReuse();
-  }, [searchParams, setSearchParams]);
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
 
   const saveGeneration = async (
     request: Omit<GenerateRequest, "mode">,
