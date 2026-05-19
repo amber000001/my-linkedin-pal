@@ -62,8 +62,10 @@ export default function Ella() {
           <TabsContent value="insights" className="space-y-6">
             <PerformanceHeatmap />
             <TopicROIMatrix />
+            <HookPatternLeaderboard />
+            <ContentGapRadar />
             <p className="text-xs text-muted-foreground text-center">
-              Boards 3 (Hook Patterns), 4 (Audience Resonance), and 5 (Content Gap Radar) ship in Phase 2.
+              Board 4 (Audience Resonance) ships in Phase 4 once the audience tagging has data.
             </p>
           </TabsContent>
 
