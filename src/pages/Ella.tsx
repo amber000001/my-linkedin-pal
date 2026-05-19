@@ -9,6 +9,7 @@ import HookPatternLeaderboard from "@/components/ella/HookPatternLeaderboard";
 import ContentGapRadar from "@/components/ella/ContentGapRadar";
 import AskElla from "@/components/ella/AskElla";
 import AudienceOnboarding from "@/components/ella/AudienceOnboarding";
+import AudienceResonance from "@/components/ella/AudienceResonance";
 
 export default function Ella() {
   const navigate = useNavigate();
@@ -64,9 +65,7 @@ export default function Ella() {
             <TopicROIMatrix />
             <HookPatternLeaderboard />
             <ContentGapRadar />
-            <p className="text-xs text-muted-foreground text-center">
-              Board 4 (Audience Resonance) ships in Phase 4 once the audience tagging has data.
-            </p>
+            <AudienceResonance />
           </TabsContent>
 
           <TabsContent value="audience">
