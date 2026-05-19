@@ -65,9 +65,7 @@ export default function Ella() {
             <TopicROIMatrix />
             <HookPatternLeaderboard />
             <ContentGapRadar />
-            <p className="text-xs text-muted-foreground text-center">
-              Board 4 (Audience Resonance) ships in Phase 4 once the audience tagging has data.
-            </p>
+            <AudienceResonance />
           </TabsContent>
 
           <TabsContent value="audience">
