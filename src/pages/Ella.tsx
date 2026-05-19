@@ -9,6 +9,7 @@ import HookPatternLeaderboard from "@/components/ella/HookPatternLeaderboard";
 import ContentGapRadar from "@/components/ella/ContentGapRadar";
 import AskElla from "@/components/ella/AskElla";
 import AudienceOnboarding from "@/components/ella/AudienceOnboarding";
+import AudienceResonance from "@/components/ella/AudienceResonance";
 
 export default function Ella() {
   const navigate = useNavigate();
