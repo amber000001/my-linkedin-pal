@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const SEGMENTS = ["founder", "engineer", "pm", "designer", "recruiter", "other"];
 
@@ -26,6 +27,7 @@ export default function AudienceResonance() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [drill, setDrill] = useState<{ segment: string; topic: string } | null>(null);
+  const [sortBy, setSortBy] = useState<"total" | "reactions" | "comments" | "reshares" | "recent">("total");
 
   useEffect(() => {
     Promise.all([
@@ -150,6 +152,22 @@ export default function AudienceResonance() {
             </DialogDescription>
           </DialogHeader>
 
+          <div className="flex items-center gap-2 text-xs">
+            <span className="text-muted-foreground">Sort by</span>
+            <Select value={sortBy} onValueChange={(v) => setSortBy(v as any)}>
+              <SelectTrigger className="h-8 w-44 glass border-border/40 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="total">Total engagement</SelectItem>
+                <SelectItem value="reactions">Reactions</SelectItem>
+                <SelectItem value="comments">Comments</SelectItem>
+                <SelectItem value="reshares">Reshares</SelectItem>
+                <SelectItem value="recent">Most recent</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
           {(() => {
             const byPost = new Map<string, Signal[]>();
             for (const s of drillSignals) {
@@ -157,9 +175,24 @@ export default function AudienceResonance() {
               arr.push(s);
               byPost.set(s.linkedin_post_id!, arr);
             }
+            const sumKey = (sigs: Signal[], k: "reactions" | "comments" | "reshares") =>
+              sigs.reduce((s, x) => s + (x.engagement_types?.[k] || 0), 0);
+            const entries = Array.from(byPost.entries()).sort(([, a], [, b]) => {
+              if (sortBy === "recent") {
+                const ta = Math.max(...a.map((s) => new Date(s.measured_at).getTime()));
+                const tb = Math.max(...b.map((s) => new Date(s.measured_at).getTime()));
+                return tb - ta;
+              }
+              if (sortBy === "total") {
+                const ta = sumKey(a, "reactions") + sumKey(a, "comments") + sumKey(a, "reshares");
+                const tb = sumKey(b, "reactions") + sumKey(b, "comments") + sumKey(b, "reshares");
+                return tb - ta;
+              }
+              return sumKey(b, sortBy) - sumKey(a, sortBy);
+            });
             return (
               <div className="space-y-4">
-                {Array.from(byPost.entries()).map(([postId, sigs]) => {
+                {entries.map(([postId, sigs]) => {
                   const post = postsById.get(postId);
                   if (!post) return null;
                   const totalReactions = sigs.reduce((s, x) => s + (x.engagement_types?.reactions || 0), 0);
