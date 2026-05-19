@@ -27,6 +27,7 @@ export default function AudienceResonance() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [drill, setDrill] = useState<{ segment: string; topic: string } | null>(null);
+  const [sortBy, setSortBy] = useState<"total" | "reactions" | "comments" | "reshares" | "recent">("total");
 
   useEffect(() => {
     Promise.all([
