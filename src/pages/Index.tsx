@@ -26,6 +26,7 @@ const Index = () => {
   const [reuseFreeText, setReuseFreeText] = useState<string | undefined>();
   const [reuseUrl, setReuseUrl] = useState<string | undefined>();
   const [reuseMemeTemplate, setReuseMemeTemplate] = useState<string | undefined>();
+  const [currentGeneration, setCurrentGeneration] = useState<PostGeneration | null>(null);
 
   const handledReuseRef = useRef<string | null>(null);
 
@@ -65,6 +66,7 @@ const Index = () => {
         cta: item.cta_options || undefined,
         commentReplies: item.comment_replies || [],
       });
+      setCurrentGeneration(item);
       setLastRequest({
         topic: item.topic_dropdown_value || item.topic || undefined,
         freeText: item.input_text || undefined,
@@ -91,7 +93,7 @@ const Index = () => {
     result: GenerateResponse
   ) => {
     try {
-      await supabase.from("post_generations").insert({
+      const payload = {
         topic: request.topic || null,
         post_type: mode,
         topic_dropdown_value: request.topic || null,
@@ -109,7 +111,14 @@ const Index = () => {
         status: "draft",
         is_favorite: false,
         generated_post_id: result.generatedPostId || null,
-      } as any);
+      };
+      const { data, error } = await supabase
+        .from("post_generations")
+        .insert(payload as any)
+        .select("*")
+        .single();
+      if (error) throw error;
+      if (data) setCurrentGeneration(data as PostGeneration);
     } catch (e) {
       console.error("Failed to save generation:", e);
     }
@@ -258,7 +267,7 @@ const Index = () => {
               {mode === "meme" && output?.memeIdeas && output.memeIdeas.length > 0 && (
                 <MemeGenerator memeIdeas={output.memeIdeas} />
               )}
-              {output && <PostEditor output={output} />}
+              {output && <PostEditor output={output} generation={currentGeneration} onMarkedPosted={() => toast.success("Logged to history & intelligence ✨")} />}
             </div>
           </div>
         )}
