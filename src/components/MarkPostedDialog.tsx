@@ -57,9 +57,10 @@ interface MarkPostedDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess: () => void;
+  initialFinalText?: string;
 }
 
-export function MarkPostedDialog({ item, open, onOpenChange, onSuccess }: MarkPostedDialogProps) {
+export function MarkPostedDialog({ item, open, onOpenChange, onSuccess, initialFinalText }: MarkPostedDialogProps) {
   const [finalText, setFinalText] = useState("");
   const [topic, setTopic] = useState("");
   const [datePosted, setDatePosted] = useState(() => new Date().toISOString().slice(0, 10));
@@ -72,7 +73,7 @@ export function MarkPostedDialog({ item, open, onOpenChange, onSuccess }: MarkPo
 
   useEffect(() => {
     if (item && open) {
-      setFinalText(item.generated_post || "");
+      setFinalText(initialFinalText ?? item.generated_post ?? "");
       setTopic(item.topic_dropdown_value || item.topic || "");
       setDatePosted(new Date().toISOString().slice(0, 10));
       setSatisfaction(null);
