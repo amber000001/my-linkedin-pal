@@ -18,14 +18,13 @@ interface Cell {
 }
 
 export default function PerformanceHeatmap() {
-  const [posts, setPosts] = useState<Array<{ topic: string; date_posted: string; reaction_rate: number | null }>>([]);
+  const [posts, setPosts] = useState<Array<{ topic: string; posted_at: string | null; date_posted: string | null; reaction_rate: number | null }>>([]);
   const [topicFilter, setTopicFilter] = useState<string>("all");
 
   useEffect(() => {
     supabase
       .from("linkedin_posts")
-      .select("topic, date_posted, reaction_rate")
-      .not("date_posted", "is", null)
+      .select("topic, posted_at, date_posted, reaction_rate")
       .then(({ data }) => setPosts((data || []) as any));
   }, []);
 
@@ -33,10 +32,13 @@ export default function PerformanceHeatmap() {
   const grid: Cell[][] = DAYS.map(() => BUCKETS.map(() => ({ rates: [], n: 0 })));
 
   for (const p of filtered) {
-    if (!p.date_posted) continue;
-    const d = new Date(p.date_posted);
-    const dow = (d.getUTCDay() + 6) % 7; // Mon=0
-    const hour = d.getUTCHours();
+    const ts = p.posted_at || (p.date_posted ? `${p.date_posted}T09:00:00Z` : null);
+    if (!ts) continue;
+    const d = new Date(ts);
+    if (isNaN(d.getTime())) continue;
+    // Local day-of-week and hour so buckets match how the user thinks about time
+    const dow = (d.getDay() + 6) % 7; // Mon=0
+    const hour = d.getHours();
     const bIdx = BUCKETS.findIndex((b) => hour >= b.start && hour < b.end);
     if (bIdx < 0) continue;
     grid[dow][bIdx].rates.push(p.reaction_rate || 0);
@@ -78,7 +80,7 @@ export default function PerformanceHeatmap() {
       </CardHeader>
       <CardContent>
         {filtered.length === 0 ? (
-          <p className="text-sm text-muted-foreground py-8 text-center">No dated posts yet. Add `date_posted` in the repository to populate.</p>
+          <p className="text-sm text-muted-foreground py-8 text-center">No timestamped posts yet. Mark a draft as posted (with date & time) to populate.</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-xs">
