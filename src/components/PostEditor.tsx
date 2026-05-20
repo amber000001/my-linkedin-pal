@@ -2,18 +2,23 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
-import { Copy, Check, Plus, X } from "lucide-react";
+import { Copy, Check, Plus, X, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import type { GenerateResponse } from "@/lib/api";
+import type { PostGeneration } from "@/lib/history";
+import { MarkPostedDialog } from "@/components/MarkPostedDialog";
 
 interface PostEditorProps {
   output: GenerateResponse | null;
+  generation?: PostGeneration | null;
+  onMarkedPosted?: () => void;
 }
 
-export function PostEditor({ output }: PostEditorProps) {
+export function PostEditor({ output, generation, onMarkedPosted }: PostEditorProps) {
   const [postContent, setPostContent] = useState("");
   const [hooks, setHooks] = useState<string[]>([""]);
   const [copied, setCopied] = useState(false);
+  const [markOpen, setMarkOpen] = useState(false);
 
   // Sync with output when it changes
   const syncFromOutput = () => {
@@ -51,6 +56,14 @@ export function PostEditor({ output }: PostEditorProps) {
     setPostContent(hook + "\n\n" + postContent.replace(/^.*?\n\n/, ""));
   };
 
+  const handleMarkPosted = () => {
+    if (!generation) {
+      toast.error("Generate or load a draft before marking as posted.");
+      return;
+    }
+    setMarkOpen(true);
+  };
+
   return (
     <div className="glass rounded-2xl p-6 sparkle-border h-full flex flex-col">
       <div className="flex items-center justify-between mb-4">
@@ -68,6 +81,16 @@ export function PostEditor({ output }: PostEditorProps) {
               Load Generated
             </Button>
           )}
+          <Button
+            variant="generate"
+            size="sm"
+            onClick={handleMarkPosted}
+            disabled={!generation || !postContent.trim()}
+            className="text-xs rounded-lg"
+          >
+            <CheckCircle2 className="h-3.5 w-3.5 mr-1" />
+            Mark as Posted
+          </Button>
           <Button
             variant="ghost"
             size="sm"
@@ -161,6 +184,16 @@ export function PostEditor({ output }: PostEditorProps) {
           </div>
         )}
       </div>
+
+      <MarkPostedDialog
+        item={generation ?? null}
+        open={markOpen}
+        onOpenChange={setMarkOpen}
+        initialFinalText={postContent}
+        onSuccess={() => {
+          onMarkedPosted?.();
+        }}
+      />
     </div>
   );
 }
