@@ -91,11 +91,14 @@ export function UploadToIntelligenceDialog({
 
     setIsSubmitting(true);
     try {
+      const postedAtIso = datePosted ? new Date(datePosted).toISOString() : null;
+      const datePostedOnly = datePosted ? datePosted.slice(0, 10) : null;
       const { error } = await supabase.from("linkedin_posts").insert({
         topic: finalTopic,
         post_type: postType,
         post_text: item.generated_post,
-        date_posted: datePosted || null,
+        date_posted: datePostedOnly,
+        posted_at: postedAtIso,
         impressions: imp,
         reactions: react,
         comments: comm,
@@ -192,10 +195,10 @@ export function UploadToIntelligenceDialog({
             <div>
               <label className="text-sm font-medium text-secondary-foreground mb-1.5 block font-body">
                 <Calendar className="h-3.5 w-3.5 inline mr-1" />
-                Date Posted
+                Date & Time Posted
               </label>
               <Input
-                type="date"
+                type="datetime-local"
                 value={datePosted}
                 onChange={(e) => setDatePosted(e.target.value)}
                 className="glass border-border/40 text-foreground h-11 rounded-xl"
