@@ -268,6 +268,7 @@ export type Database = {
           impressions: number | null
           post_text: string
           post_type: string
+          posted_at: string | null
           reaction_rate: number | null
           reactions: number | null
           structure: Json | null
@@ -284,6 +285,7 @@ export type Database = {
           impressions?: number | null
           post_text: string
           post_type?: string
+          posted_at?: string | null
           reaction_rate?: number | null
           reactions?: number | null
           structure?: Json | null
@@ -300,6 +302,7 @@ export type Database = {
           impressions?: number | null
           post_text?: string
           post_type?: string
+          posted_at?: string | null
           reaction_rate?: number | null
           reactions?: number | null
           structure?: Json | null
