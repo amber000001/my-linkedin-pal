@@ -155,10 +155,16 @@ export function MarkPostedDialog({ item, open, onOpenChange, onSuccess, initialF
         }
       }
 
-      // 4. Mark history row as posted
+      // 4. Mark history row as posted + capture final text/diff
       const { error: pgErr } = await supabase
         .from("post_generations")
-        .update({ status: "posted" })
+        .update({
+          status: "posted",
+          final_post: finalText,
+          edit_distance: distance,
+          edit_reason: editReason.trim() || null,
+          posted_at: postedAtIso,
+        } as any)
         .eq("id", item.id);
       if (pgErr) console.error("post_generations update error:", pgErr);
 

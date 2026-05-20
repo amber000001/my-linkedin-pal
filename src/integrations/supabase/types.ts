@@ -369,6 +369,9 @@ export type Database = {
           comment_replies: Json | null
           created_at: string
           cta_options: string | null
+          edit_distance: number | null
+          edit_reason: string | null
+          final_post: string | null
           generated_post: string
           generated_post_id: string | null
           hashtags: Json | null
@@ -380,6 +383,7 @@ export type Database = {
           meme_ideas: Json | null
           meme_template: string | null
           post_type: string
+          posted_at: string | null
           status: string
           topic: string | null
           topic_dropdown_value: string | null
@@ -390,6 +394,9 @@ export type Database = {
           comment_replies?: Json | null
           created_at?: string
           cta_options?: string | null
+          edit_distance?: number | null
+          edit_reason?: string | null
+          final_post?: string | null
           generated_post: string
           generated_post_id?: string | null
           hashtags?: Json | null
@@ -401,6 +408,7 @@ export type Database = {
           meme_ideas?: Json | null
           meme_template?: string | null
           post_type?: string
+          posted_at?: string | null
           status?: string
           topic?: string | null
           topic_dropdown_value?: string | null
@@ -411,6 +419,9 @@ export type Database = {
           comment_replies?: Json | null
           created_at?: string
           cta_options?: string | null
+          edit_distance?: number | null
+          edit_reason?: string | null
+          final_post?: string | null
           generated_post?: string
           generated_post_id?: string | null
           hashtags?: Json | null
@@ -422,6 +433,7 @@ export type Database = {
           meme_ideas?: Json | null
           meme_template?: string | null
           post_type?: string
+          posted_at?: string | null
           status?: string
           topic?: string | null
           topic_dropdown_value?: string | null
