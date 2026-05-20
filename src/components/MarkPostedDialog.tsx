@@ -63,7 +63,13 @@ interface MarkPostedDialogProps {
 export function MarkPostedDialog({ item, open, onOpenChange, onSuccess, initialFinalText }: MarkPostedDialogProps) {
   const [finalText, setFinalText] = useState("");
   const [topic, setTopic] = useState("");
-  const [datePosted, setDatePosted] = useState(() => new Date().toISOString().slice(0, 10));
+  const [datePosted, setDatePosted] = useState(() => {
+    const d = new Date();
+    d.setSeconds(0, 0);
+    // local datetime-local format YYYY-MM-DDTHH:MM
+    const pad = (n: number) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  });
   const [satisfaction, setSatisfaction] = useState<"positive" | "negative" | null>(null);
   const [editReason, setEditReason] = useState("");
   const [impressions, setImpressions] = useState("");
@@ -105,7 +111,8 @@ export function MarkPostedDialog({ item, open, onOpenChange, onSuccess, initialF
       const comm = parseInt(commentsInput) || 0;
       const hasMetrics = imp > 0 || react > 0 || comm > 0;
       const postType = MODE_TO_POST_TYPE[item.post_type] || "thought_leadership";
-      const postedAtIso = datePosted ? new Date(`${datePosted}T12:00:00Z`).toISOString() : new Date().toISOString();
+      const postedAtIso = datePosted ? new Date(datePosted).toISOString() : new Date().toISOString();
+      const datePostedOnly = datePosted ? datePosted.slice(0, 10) : null;
 
       // 1. Insert into intelligence repository (linkedin_posts)
       const { data: lpRow, error: lpErr } = await supabase
@@ -114,7 +121,8 @@ export function MarkPostedDialog({ item, open, onOpenChange, onSuccess, initialF
           topic: finalTopic,
           post_type: postType,
           post_text: finalText,
-          date_posted: datePosted || null,
+          date_posted: datePostedOnly,
+          posted_at: postedAtIso,
           impressions: imp,
           reactions: react,
           comments: comm,
