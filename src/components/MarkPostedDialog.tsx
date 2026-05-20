@@ -241,14 +241,15 @@ export function MarkPostedDialog({ item, open, onOpenChange, onSuccess, initialF
             </div>
             <div>
               <label className="text-sm font-medium text-secondary-foreground mb-1.5 block font-body">
-                <Calendar className="h-3.5 w-3.5 inline mr-1" /> Date posted
+                <Calendar className="h-3.5 w-3.5 inline mr-1" /> Date & time posted
               </label>
               <Input
-                type="date"
+                type="datetime-local"
                 value={datePosted}
                 onChange={(e) => setDatePosted(e.target.value)}
                 className="glass border-border/40 text-foreground h-10 rounded-xl"
               />
+              <p className="text-[10px] text-muted-foreground mt-1">Used by the Performance Heatmap to learn your best times.</p>
             </div>
           </div>
 
