@@ -98,9 +98,13 @@ Follow this flow naturally (not rigidly):
 ### Hashtags
 - Cap at 0-3 hashtags. Stacks of 5 read as AI/SEO bait.
 
-### Emojis
-- Emojis ARE allowed in body text — but use them sparingly and naturally, guided by the EMOJI INTELLIGENCE section below. Place them as accent points (start of a line, before a key phrase, or in closings), never cluttering every sentence.
-- NO emoji at the start of every line as a bullet substitute.
+### Emojis (use VERY sparingly)
+- Default to ZERO emojis. A post with no emoji reads as human and confident.
+- Maximum 1-2 emojis in the ENTIRE post, only when they add real meaning. If unsure, skip them.
+- ABSOLUTELY NO emojis inside bullet points or list items. Bullets must be plain text only.
+- NO emoji at the start of any line as a bullet substitute (checkmarks, sparkles, rockets, lightbulbs, sirens, bolts, targets, etc.).
+- NO decorative emoji clusters. NO emoji in the closing line as a "stinger".
+- If the EMOJI INTELLIGENCE section below shows the author rarely uses emojis, use ZERO.
 
 ### Existing tone rules
 - NO typical ChatGPT/AI phrasing or tone
