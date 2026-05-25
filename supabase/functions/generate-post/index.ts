@@ -49,19 +49,77 @@ Follow this flow naturally (not rigidly):
 - Should feel spoken, not written
 - Not robotic, not too polished, not too broken
 
-## HARD RULES — NEVER BREAK THESE
-- NO em dashes (—)
-- NEVER use: "here's the thing", "here's the kicker", "here's the reality"
-- NEVER use: "it's not about X, it's about Y" structure
-- NEVER use AI filler: "in today's digital landscape", "as we navigate the evolving ecosystem", "game changer", "unlock the power of"
+## HARD RULES — NEVER BREAK THESE (LinkedIn suppresses AI-sounding posts; every rule below is an AI tell)
+
+### Typography (ASCII only)
+- NO em dashes (—) or en dashes (–). Use a comma, a period, or " - " instead.
+- NO smart/curly quotes (" " ' '). Use straight ASCII quotes only.
+- NO Title Case On Random Nouns for emphasis.
+
+### Banned phrases / openers / closers
+- NEVER use: "here's the thing", "here's the kicker", "here's the reality", "here's the truth", "here's what nobody tells you", "here's what I learned"
+- NEVER use: "it's not about X, it's about Y" or "it's not just X, it's Y"
+- NEVER use: "in a world where...", "in today's...", "the truth is...", "the reality is...", "at the end of the day", "when all is said and done"
+- NEVER use: "let that sink in", "read that again", "pause and think"
+- NEVER use AI filler vocab: "game changer/changing", "powerhouse", "unlock", "leverage", "deep dive", "delve", "navigate" (verb), "ecosystem" (unless email ecosystem), "landscape", "robust", "seamless", "elevate", "supercharge", "tapestry", "testament to", "stands as", "crucial", "essential", "vital", "pivotal", "paramount", "in essence", "essentially", "fundamentally", "ultimately", "whether you're X or Y", "not only ... but also"
+- NEVER open with: "I used to think X. Then Y happened.", "Last week, a [client/founder/CEO] told me...", "Ever wondered...", "What if I told you..."
+- NEVER open with suspiciously round stats ("90% of marketers...", "3 out of 4 founders...") unless the number comes from the user's input.
+- NEVER close with: "What's your take?", "Agree or disagree?", "Thoughts?", "Follow me for more...", "You've got this.", "Keep building."
+- NO "PS / P.S." second-hook lines at the end.
+- NO "Remember:" / "Pro tip:" / "Here's what I learned:" as standalone lines.
+
+### Sentence rhythm (the biggest tell)
+- VARY sentence length aggressively. AI defaults to uniformly short 6-12 word sentences — humans mix long winding sentences (25-40 words, with commas and clauses that double back) with mediums and shorts and the occasional fragment.
+- EVERY post must include AT LEAST ONE long sentence (25+ words) that breathes through multiple clauses.
+- Allow sentence fragments. "Wild." / "Every time." / "Anyway." on their own line is human. AI never does this.
+- It's okay to trail off mid-thought with "..." or end a line on a comma fragment occasionally.
+- DO NOT write every paragraph as exactly one sentence. Mix 1-sentence, 2-sentence, and 3-sentence paragraphs.
+
+### Structural anti-patterns
+- NO symmetric 3-bullet lists with parallel grammar ("Faster. Cheaper. Better.").
+- NO "rule of three" closers ("It's simple. It's powerful. It's overlooked.").
+- NO hook → 3 bullets → one-line CTA template. That's the #1 AI giveaway on LinkedIn.
+- NO emoji bullets (✅ 🔑 💡 🚀) at the start of every line.
+- NO numbered lists with bold lead-ins ("**1. Clarity** - ...").
+- NO colons setting up every line ("The result: X. The lesson: Y.").
+- NO parenthetical asides in every paragraph.
+- NO rhetorical questions the author then answers ("Why does this happen? Because...").
+- NO over-explaining the insight ("This matters because..." — trust the reader).
+- NO contrarian take immediately softened ("Hot take: meetings are useless. Well, most of them.").
+- NO "I learned X in Y years that I wish I knew earlier" frame.
+- NO problem → 3 solutions → CTA template.
+- NO name-dropping concepts without specifics ("first principles", "compound effects", "deep work" with no example).
+
+### Tone / punctuation
+- NO exclamation points on positive statements. Humans on LinkedIn rarely use them.
+- Allow occasional lowercase sentence starts and minor imperfection. Perfect grammar every line = AI.
+- NO motivational closers.
+
+### Hashtags
+- Cap at 0-3 hashtags. Stacks of 5 read as AI/SEO bait.
+
+### Emojis
+- Emojis ARE allowed in body text — but use them sparingly and naturally, guided by the EMOJI INTELLIGENCE section below. Place them as accent points (start of a line, before a key phrase, or in closings), never cluttering every sentence.
+- NO emoji at the start of every line as a bullet substitute.
+
+### Existing tone rules
 - NO typical ChatGPT/AI phrasing or tone
 - NO filler words or sentences
 - NO over-explaining
 - NO sounding preachy or self-righteous
 - NO bullet-point listicles unless explicitly asked
-- Emojis ARE allowed in body text — but use them sparingly and naturally, guided by the EMOJI INTELLIGENCE section below. Place them as accent points (start of a line, before a key phrase, or in closings), never cluttering every sentence.
 - NO overly dramatic tone, no motivational clichés, no salesy language
-- NO very short fragmented sentences for dramatic effect
+
+## SELF-CHECK BEFORE RETURNING
+Before you finalize the post, read it back and confirm:
+1. At least one sentence is 25+ words long, with multiple clauses.
+2. Sentence lengths visibly vary (not all 6-12 words).
+3. Zero banned phrases from the lists above.
+4. Zero em dashes, en dashes, smart quotes.
+5. Hashtags ≤ 3.
+6. The closing is NOT a generic engagement question.
+7. The structure is NOT hook → 3 bullets → CTA.
+If any check fails, REWRITE before returning.
 
 ## BULLET POINT STYLE
 Bullets used when explaining: customer behaviors, deliverability problems, campaign mistakes, lessons learned. Bullets should feel natural, not overly formatted.
@@ -605,30 +663,72 @@ The voice is the author. The subject is the trend.`
     }
 
     // Post-processing: sanitize banned patterns from all text fields
+    const BANNED_PATTERNS: RegExp[] = [
+      // Lexical openers / closers / connectors
+      /here'?s the (thing|kicker|reality|truth|deal)[,:.]?/gi,
+      /here'?s what (nobody tells you|i learned)[,:.]?/gi,
+      /in today'?s digital landscape/gi,
+      /as we navigate the evolving ecosystem/gi,
+      /in a world where/gi,
+      /in today'?s (fast-?moving|fast-?paced|ever-?changing)\b[^.]*/gi,
+      /the (truth|reality) is[,:]?/gi,
+      /at the end of the day/gi,
+      /when all is said and done/gi,
+      /let that sink in\.?/gi,
+      /read that again\.?/gi,
+      /it'?s not about ([^,.]+), it'?s about/gi,
+      /it'?s not just ([^,.]+), it'?s/gi,
+      // AI vocab
+      /\bgame[- ]chang(er|ing)\b/gi,
+      /\bunlock the power of\b/gi,
+      /\bleverag(e|ing)\b/gi,
+      /\bdeep dive\b/gi,
+      /\bdelve into\b/gi,
+      /\bsupercharge\b/gi,
+      /\btapestry\b/gi,
+      /\btestament to\b/gi,
+      /\bstands as\b/gi,
+      /\bpowerhouse\b/gi,
+      /\bseamless(ly)?\b/gi,
+      /\brobust\b/gi,
+      /\belevat(e|ing|es)\b/gi,
+      /\bnot only\b[^.]*\bbut also\b/gi,
+      /\bin essence\b/gi,
+      /\bessentially\b/gi,
+      /\bfundamentally\b/gi,
+      // Closers
+      /what'?s your take\??/gi,
+      /agree or disagree\??/gi,
+      /^thoughts\??$/gim,
+      /follow me for more[^.\n]*/gi,
+      /you'?ve got this\.?/gi,
+      /keep building\.?/gi,
+    ];
+
     const sanitizeText = (text: string): string => {
       let result = text;
-      // Replace em dashes with spaced hyphens
-      result = result.replace(/—/g, " - ");
-      // Remove banned phrases (case-insensitive)
-      const bannedPhrases = [
-        /here'?s the thing[,:.]?/gi,
-        /here'?s the kicker[,:.]?/gi,
-        /here'?s the reality[,:.]?/gi,
-        /in today'?s digital landscape/gi,
-        /as we navigate the evolving ecosystem/gi,
-        /game changer/gi,
-        /unlock the power of/gi,
-        /it'?s not about ([^,.]+), it'?s about/gi,
-      ];
-      for (const pattern of bannedPhrases) {
-        result = result.replace(pattern, "").replace(/\n{3,}/g, "\n\n").trim();
+      // Typography normalization
+      result = result.replace(/—/g, ", ");      // em dash -> comma
+      result = result.replace(/–/g, "-");        // en dash -> hyphen
+      result = result.replace(/[\u2018\u2019]/g, "'");  // smart single quotes
+      result = result.replace(/[\u201C\u201D]/g, '"');  // smart double quotes
+      // Strip banned phrases
+      for (const pattern of BANNED_PATTERNS) {
+        result = result.replace(pattern, "");
       }
-      // Clean up double spaces left behind
+      // Cap hashtags at 3 (keep first 3, drop the rest)
+      const hashtagMatches = result.match(/#[\w-]+/g) || [];
+      if (hashtagMatches.length > 3) {
+        let kept = 0;
+        result = result.replace(/#[\w-]+/g, (m) => (++kept <= 3 ? m : ""));
+      }
+      // Clean up whitespace artifacts
       result = result.replace(/ {2,}/g, " ");
-      return result;
+      result = result.replace(/\n{3,}/g, "\n\n");
+      result = result.replace(/[ \t]+\n/g, "\n");
+      return result.trim();
     };
 
-    // Apply sanitization to all string fields in parsed output (incl. nested {pattern,text} objects)
     const sanitizeAny = (v: unknown): unknown => {
       if (typeof v === "string") return sanitizeText(v);
       if (Array.isArray(v)) return v.map(sanitizeAny);
@@ -639,6 +739,61 @@ The voice is the author. The subject is the trend.`
       }
       return v;
     };
+
+    // Detect if mainPost still contains serious AI tells AFTER sanitization
+    // (sanitizer strips known phrases, but the model may produce structural tells)
+    const hasStructuralAiTells = (text: string): string | null => {
+      if (!text) return null;
+      // Uniformly short sentences: split on . ! ? and check lengths
+      const sentences = text.split(/(?<=[.!?])\s+/).map((s) => s.trim()).filter((s) => s.length > 0 && /\w/.test(s));
+      if (sentences.length >= 4) {
+        const wordCounts = sentences.map((s) => s.split(/\s+/).filter(Boolean).length);
+        const hasLong = wordCounts.some((w) => w >= 22);
+        const allShort = wordCounts.every((w) => w <= 14);
+        if (allShort && !hasLong) return "all sentences too short / no long sentence";
+      }
+      // Em dash, en dash, smart quotes survived
+      if (/[—–\u2018\u2019\u201C\u201D]/.test(text)) return "typography violation";
+      return null;
+    };
+
+    // Optionally regenerate ONCE if structural tells detected
+    const tryRegenerate = async (reason: string): Promise<string | null> => {
+      console.log("Regenerating due to AI tell:", reason);
+      const fixupMessages = [
+        { role: "system", content: STYLE_SYSTEM_PROMPT + repositoryContext + performanceLearning + lengthStructure + newsRideOverride + "\n\n" + modePrompt },
+        { role: "user", content: userMessage },
+        { role: "assistant", content: content },
+        { role: "user", content: `Your previous draft violated the anti-AI rules (${reason}). Rewrite the post so that: (1) sentence lengths visibly VARY, (2) at least one sentence is 25+ words with multiple clauses, (3) zero em dashes / en dashes / smart quotes, (4) zero banned phrases from the HARD RULES section, (5) no symmetric 3-bullet + CTA structure. Return the SAME JSON shape.` },
+      ];
+      try {
+        const r = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
+          body: JSON.stringify({ model: "google/gemini-3-flash-preview", messages: fixupMessages }),
+        });
+        if (!r.ok) return null;
+        const d = await r.json();
+        return d.choices?.[0]?.message?.content || null;
+      } catch (e) {
+        console.error("Regenerate failed:", e);
+        return null;
+      }
+    };
+
+    const tellReason = hasStructuralAiTells(parsed.mainPost || "");
+    if (tellReason) {
+      const retryContent = await tryRegenerate(tellReason);
+      if (retryContent) {
+        try {
+          const m = retryContent.match(/```(?:json)?\s*([\s\S]*?)```/);
+          const js = m ? m[1].trim() : retryContent.trim();
+          const retryParsed = JSON.parse(js);
+          if (retryParsed && retryParsed.mainPost) parsed = retryParsed;
+        } catch { /* keep original */ }
+      }
+    }
+
     for (const key of Object.keys(parsed)) parsed[key] = sanitizeAny(parsed[key]);
 
     // --- Capture tagged generation in DB (Phase 1 closed-loop foundation) ---
