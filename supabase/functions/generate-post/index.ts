@@ -730,10 +730,25 @@ The voice is the author. The subject is the trend.`
         let kept = 0;
         result = result.replace(/#[\w-]+/g, (m) => (++kept <= 3 ? m : ""));
       }
+      // Strip emojis from the start of any line (used as bullet substitutes)
+      const emojiCharClass = /[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{FE00}-\u{FE0F}\u{1FA00}-\u{1FAF8}\u{2728}\u{2705}\u{1F4A1}\u{1F680}\u{1F3AF}\u{1F525}]/gu;
+      result = result.replace(/^[\s\-\*•\u2022]*([\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{FE00}-\u{FE0F}\u{1FA00}-\u{1FAF8}\u{2728}\u{2705}]+)\s*/gmu, "");
+      // Strip emojis from inside bullet/list lines entirely
+      result = result.split("\n").map((line) => {
+        if (/^\s*([\-\*•\u2022]|\d+\.)\s+/.test(line)) {
+          return line.replace(emojiCharClass, "").replace(/ {2,}/g, " ");
+        }
+        return line;
+      }).join("\n");
+      // Clean up orphan fragments left by phrase stripping (lines starting lowercase mid-clause after a stripped opener)
+      result = result.replace(/\n[ \t]*([a-z][^\n.!?]{0,80}[.!?])/g, (_m, frag) => "\n" + frag.charAt(0).toUpperCase() + frag.slice(1));
       // Clean up whitespace artifacts
       result = result.replace(/ {2,}/g, " ");
       result = result.replace(/\n{3,}/g, "\n\n");
       result = result.replace(/[ \t]+\n/g, "\n");
+      // Fix leftover punctuation glitches from stripped phrases
+      result = result.replace(/\s+([,.;:!?])/g, "$1");
+      result = result.replace(/([.!?])\s*\1+/g, "$1");
       return result.trim();
     };
 
