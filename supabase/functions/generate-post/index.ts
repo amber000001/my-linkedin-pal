@@ -61,7 +61,8 @@ Follow this flow naturally (not rigidly):
 - NEVER use: "it's not about X, it's about Y" or "it's not just X, it's Y"
 - NEVER use: "in a world where...", "in today's...", "the truth is...", "the reality is...", "at the end of the day", "when all is said and done"
 - NEVER use: "let that sink in", "read that again", "pause and think"
-- NEVER use AI filler vocab: "game changer/changing", "powerhouse", "unlock", "leverage", "deep dive", "delve", "navigate" (verb), "ecosystem" (unless email ecosystem), "landscape", "robust", "seamless", "elevate", "supercharge", "tapestry", "testament to", "stands as", "crucial", "essential", "vital", "pivotal", "paramount", "in essence", "essentially", "fundamentally", "ultimately", "whether you're X or Y", "not only ... but also"
+- NEVER use AI filler vocab: "game changer/changing", "powerhouse", "unlock", "leverage", "deep dive", "delve", "navigate" (verb), "ecosystem" (unless email ecosystem), "landscape", "robust", "seamless", "elevate", "supercharge", "tapestry", "testament to", "stands as", "crucial", "essential", "vital", "pivotal", "paramount", "in essence", "essentially", "fundamentally", "ultimately", "whether you're X or Y", "not only ... but also", "fundamental shift", "paradigm shift", "tectonic shift", "seismic shift"
+- NEVER use the "not just X; it's Y" / "this isn't just X, it's Y" frame with ANY separator (comma, semicolon, dash, colon). Just state Y directly.
 - NEVER open with: "I used to think X. Then Y happened.", "Last week, a [client/founder/CEO] told me...", "Ever wondered...", "What if I told you..."
 - NEVER open with suspiciously round stats ("90% of marketers...", "3 out of 4 founders...") unless the number comes from the user's input.
 - NEVER close with: "What's your take?", "Agree or disagree?", "Thoughts?", "Follow me for more...", "You've got this.", "Keep building."
@@ -98,9 +99,13 @@ Follow this flow naturally (not rigidly):
 ### Hashtags
 - Cap at 0-3 hashtags. Stacks of 5 read as AI/SEO bait.
 
-### Emojis
-- Emojis ARE allowed in body text — but use them sparingly and naturally, guided by the EMOJI INTELLIGENCE section below. Place them as accent points (start of a line, before a key phrase, or in closings), never cluttering every sentence.
-- NO emoji at the start of every line as a bullet substitute.
+### Emojis (use VERY sparingly)
+- Default to ZERO emojis. A post with no emoji reads as human and confident.
+- Maximum 1-2 emojis in the ENTIRE post, only when they add real meaning. If unsure, skip them.
+- ABSOLUTELY NO emojis inside bullet points or list items. Bullets must be plain text only.
+- NO emoji at the start of any line as a bullet substitute (checkmarks, sparkles, rockets, lightbulbs, sirens, bolts, targets, etc.).
+- NO decorative emoji clusters. NO emoji in the closing line as a "stinger".
+- If the EMOJI INTELLIGENCE section below shows the author rarely uses emojis, use ZERO.
 
 ### Existing tone rules
 - NO typical ChatGPT/AI phrasing or tone
@@ -672,15 +677,15 @@ The voice is the author. The subject is the trend.`
       /here'?s what (nobody tells you|i learned)[,:.]?/gi,
       /in today'?s digital landscape/gi,
       /as we navigate the evolving ecosystem/gi,
-      /in a world where/gi,
+      /in a world where[^.!?\n]*[.!?]?/gi,
       /in today'?s (fast-?moving|fast-?paced|ever-?changing)\b[^.]*/gi,
       /the (truth|reality) is[,:]?/gi,
       /at the end of the day/gi,
       /when all is said and done/gi,
       /let that sink in\.?/gi,
       /read that again\.?/gi,
-      /it'?s not about ([^,.]+), it'?s about/gi,
-      /it'?s not just ([^,.]+), it'?s/gi,
+      /it'?s not about [^.;,\n]{2,80}[,;]\s*it'?s about/gi,
+      /(it'?s|this is|this isn'?t)\s+(just|not|only)\s+[^.;,\n]{2,80}[,;]\s*(it'?s|it is|it'?s a|it is a)\b[^.\n]*/gi,
       // AI vocab
       /\bgame[- ]chang(er|ing)\b/gi,
       /\bunlock the power of\b/gi,
@@ -699,6 +704,7 @@ The voice is the author. The subject is the trend.`
       /\bin essence\b/gi,
       /\bessentially\b/gi,
       /\bfundamentally\b/gi,
+      /\b(fundamental|paradigm|tectonic|seismic)\s+shift\b/gi,
       // Closers
       /what'?s your take\??/gi,
       /agree or disagree\??/gi,
@@ -725,10 +731,25 @@ The voice is the author. The subject is the trend.`
         let kept = 0;
         result = result.replace(/#[\w-]+/g, (m) => (++kept <= 3 ? m : ""));
       }
+      // Strip emojis from the start of any line (used as bullet substitutes)
+      const emojiCharClass = /[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{FE00}-\u{FE0F}\u{1FA00}-\u{1FAF8}\u{2728}\u{2705}\u{1F4A1}\u{1F680}\u{1F3AF}\u{1F525}]/gu;
+      result = result.replace(/^[\s\-\*•\u2022]*([\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{FE00}-\u{FE0F}\u{1FA00}-\u{1FAF8}\u{2728}\u{2705}]+)\s*/gmu, "");
+      // Strip emojis from inside bullet/list lines entirely
+      result = result.split("\n").map((line) => {
+        if (/^\s*([\-\*•\u2022]|\d+\.)\s+/.test(line)) {
+          return line.replace(emojiCharClass, "").replace(/ {2,}/g, " ");
+        }
+        return line;
+      }).join("\n");
+      // Clean up orphan fragments left by phrase stripping (lines starting lowercase mid-clause after a stripped opener)
+      result = result.replace(/\n[ \t]*([a-z][^\n.!?]{0,80}[.!?])/g, (_m, frag) => "\n" + frag.charAt(0).toUpperCase() + frag.slice(1));
       // Clean up whitespace artifacts
       result = result.replace(/ {2,}/g, " ");
       result = result.replace(/\n{3,}/g, "\n\n");
       result = result.replace(/[ \t]+\n/g, "\n");
+      // Fix leftover punctuation glitches from stripped phrases
+      result = result.replace(/\s+([,.;:!?])/g, "$1");
+      result = result.replace(/([.!?])\s*\1+/g, "$1");
       return result.trim();
     };
 
