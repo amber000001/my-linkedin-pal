@@ -198,6 +198,20 @@ export function PostInput({ mode, onGenerate, isLoading, initialTopic, initialFr
         </div>
       )}
 
+      {mode === "thought-leadership" && (
+        <div>
+          <label className="text-sm font-medium text-secondary-foreground mb-1.5 block font-body">
+            🧭 Description <span className="text-muted-foreground">(optional – add context, angle, or specifics)</span>
+          </label>
+          <Textarea
+            placeholder="e.g. focus on B2B SaaS founders; angle is that warm-up shortcuts cost more long-term; mention the Gmail update from last week..."
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            className="glass border-border/40 text-foreground placeholder:text-muted-foreground/50 min-h-[100px] resize-y rounded-xl"
+          />
+        </div>
+      )}
+
       <div>
         <label className="text-sm font-medium text-secondary-foreground mb-1.5 block font-body">
           {mode === "meme" ? "🎭 Tone" : mode === "thought-leadership" ? "💡 Tone" : "🎨 Tone"} <span className="text-muted-foreground">(pick as many as you like)</span>

@@ -472,7 +472,7 @@ serve(async (req) => {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    const { mode, topic, freeText, url, memeTemplate, toneTags } = await req.json();
+    const { mode, topic, description, freeText, url, memeTemplate, toneTags } = await req.json();
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -581,6 +581,9 @@ serve(async (req) => {
       if (memeTemplate) userMessage += `\nMeme template/reference: ${memeTemplate}`;
     } else {
       userMessage = `Write a thought leadership LinkedIn post about: ${topic}\n\nThe post MUST be about "${topic}" specifically. Past posts in the system prompt are STYLE references only — do not drift into their subject matter (e.g. databases, list size, reactivation) unless the topic itself is that. Generate a fresh, original idea on "${topic}" with a new angle the author hasn't already covered.`;
+      if (description && typeof description === "string" && description.trim()) {
+        userMessage += `\n\nADDITIONAL CONTEXT FROM THE AUTHOR (treat as the most important signal — use this angle, audience, examples, and specifics; do not contradict it):\n${description.trim()}`;
+      }
     }
 
     if (url) {
