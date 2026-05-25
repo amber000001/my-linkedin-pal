@@ -703,6 +703,7 @@ The voice is the author. The subject is the trend.`
       /\bin essence\b/gi,
       /\bessentially\b/gi,
       /\bfundamentally\b/gi,
+      /\b(fundamental|paradigm|tectonic|seismic)\s+shift\b/gi,
       // Closers
       /what'?s your take\??/gi,
       /agree or disagree\??/gi,
