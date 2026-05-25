@@ -5,6 +5,7 @@ export type PostMode = "meme" | "thought-leadership" | "free-dump";
 export interface GenerateRequest {
   mode: PostMode;
   topic?: string;
+  description?: string;
   freeText?: string;
   url?: string;
   memeTemplate?: string;

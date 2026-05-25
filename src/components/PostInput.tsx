@@ -42,6 +42,7 @@ interface PostInputProps {
 export function PostInput({ mode, onGenerate, isLoading, initialTopic, initialFreeText, initialUrl, initialMemeTemplate }: PostInputProps) {
   const [topic, setTopic] = useState(initialTopic || "");
   const [customTopic, setCustomTopic] = useState("");
+  const [description, setDescription] = useState("");
   const [freeText, setFreeText] = useState(initialFreeText || "");
   const [url, setUrl] = useState(initialUrl || "");
   const [memeTemplate, setMemeTemplate] = useState(initialMemeTemplate || "");
@@ -100,6 +101,7 @@ export function PostInput({ mode, onGenerate, isLoading, initialTopic, initialFr
     }
     onGenerate({
       topic: effectiveTopic || undefined,
+      description: mode === "thought-leadership" ? (description.trim() || undefined) : undefined,
       freeText: mode === "free-dump" ? freeText : undefined,
       url: url || undefined,
       memeTemplate: mode === "meme" ? memeTemplate || undefined : undefined,
