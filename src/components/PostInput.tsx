@@ -42,6 +42,7 @@ interface PostInputProps {
 export function PostInput({ mode, onGenerate, isLoading, initialTopic, initialFreeText, initialUrl, initialMemeTemplate }: PostInputProps) {
   const [topic, setTopic] = useState(initialTopic || "");
   const [customTopic, setCustomTopic] = useState("");
+  const [description, setDescription] = useState("");
   const [freeText, setFreeText] = useState(initialFreeText || "");
   const [url, setUrl] = useState(initialUrl || "");
   const [memeTemplate, setMemeTemplate] = useState(initialMemeTemplate || "");
@@ -100,6 +101,7 @@ export function PostInput({ mode, onGenerate, isLoading, initialTopic, initialFr
     }
     onGenerate({
       topic: effectiveTopic || undefined,
+      description: mode === "thought-leadership" ? (description.trim() || undefined) : undefined,
       freeText: mode === "free-dump" ? freeText : undefined,
       url: url || undefined,
       memeTemplate: mode === "meme" ? memeTemplate || undefined : undefined,
@@ -192,6 +194,20 @@ export function PostInput({ mode, onGenerate, isLoading, initialTopic, initialFr
             value={freeText}
             onChange={(e) => setFreeText(e.target.value)}
             className="glass border-border/40 text-foreground placeholder:text-muted-foreground/50 min-h-[180px] resize-y rounded-xl"
+          />
+        </div>
+      )}
+
+      {mode === "thought-leadership" && (
+        <div>
+          <label className="text-sm font-medium text-secondary-foreground mb-1.5 block font-body">
+            🧭 Description <span className="text-muted-foreground">(optional – add context, angle, or specifics)</span>
+          </label>
+          <Textarea
+            placeholder="e.g. focus on B2B SaaS founders; angle is that warm-up shortcuts cost more long-term; mention the Gmail update from last week..."
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            className="glass border-border/40 text-foreground placeholder:text-muted-foreground/50 min-h-[100px] resize-y rounded-xl"
           />
         </div>
       )}
