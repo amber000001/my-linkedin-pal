@@ -61,7 +61,8 @@ Follow this flow naturally (not rigidly):
 - NEVER use: "it's not about X, it's about Y" or "it's not just X, it's Y"
 - NEVER use: "in a world where...", "in today's...", "the truth is...", "the reality is...", "at the end of the day", "when all is said and done"
 - NEVER use: "let that sink in", "read that again", "pause and think"
-- NEVER use AI filler vocab: "game changer/changing", "powerhouse", "unlock", "leverage", "deep dive", "delve", "navigate" (verb), "ecosystem" (unless email ecosystem), "landscape", "robust", "seamless", "elevate", "supercharge", "tapestry", "testament to", "stands as", "crucial", "essential", "vital", "pivotal", "paramount", "in essence", "essentially", "fundamentally", "ultimately", "whether you're X or Y", "not only ... but also"
+- NEVER use AI filler vocab: "game changer/changing", "powerhouse", "unlock", "leverage", "deep dive", "delve", "navigate" (verb), "ecosystem" (unless email ecosystem), "landscape", "robust", "seamless", "elevate", "supercharge", "tapestry", "testament to", "stands as", "crucial", "essential", "vital", "pivotal", "paramount", "in essence", "essentially", "fundamentally", "ultimately", "whether you're X or Y", "not only ... but also", "fundamental shift", "paradigm shift", "tectonic shift", "seismic shift"
+- NEVER use the "not just X; it's Y" / "this isn't just X, it's Y" frame with ANY separator (comma, semicolon, dash, colon). Just state Y directly.
 - NEVER open with: "I used to think X. Then Y happened.", "Last week, a [client/founder/CEO] told me...", "Ever wondered...", "What if I told you..."
 - NEVER open with suspiciously round stats ("90% of marketers...", "3 out of 4 founders...") unless the number comes from the user's input.
 - NEVER close with: "What's your take?", "Agree or disagree?", "Thoughts?", "Follow me for more...", "You've got this.", "Keep building."
